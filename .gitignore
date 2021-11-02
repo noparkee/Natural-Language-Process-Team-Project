@@ -185,6 +185,6 @@ $RECYCLE.BIN/
 
 # Data file
 IEMOCAP_full_release_withoutVideos.tar.gz
-IEMOCAP_full_release_withoutVideos/
+IEMOCAP_full_release/
 
 # End of https://www.toptal.com/developers/gitignore/api/python,linux,windows
