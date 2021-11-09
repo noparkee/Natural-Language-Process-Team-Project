@@ -6,7 +6,7 @@ import re
 
 PARENT_PATH = 'data/IEMOCAP_full_release/Session'
 DIALOG_PATH = '/dialog/transcriptions/'
-WAV_PATH = '/sentence/wav/'
+WAV_PATH = '/sentences/wav/'
 EMOTION_PATH = '/dialog/EmoEvaluation/'
 
 wav_lst, sentence_lst = [], []
@@ -33,8 +33,11 @@ for i in range(1, 6):
             
             s = re.findall("(.*) \[.*\]: (.*)", line_s)
             if len(s) != 0:           
-                wav, sentence = (PARENT_PATH + str(i) + WAV_PATH + s[0][0] + '.wav'), s[0][1]
+                folder = re.findall("(S.*_.*)_(.*)", s[0][0])
+                wav, sentence = (PARENT_PATH + str(i) + WAV_PATH + folder[0][0] + '/' + s[0][0] + '.wav'), s[0][1]
                 wav_lst.append(wav)
+                #print(wav)
+                #input()
                 sentence_lst.append(sentence)
                 sentence_file_name.append(s[0][0])
 
@@ -58,9 +61,9 @@ data = pd.merge(sentence_pd, label_pd)
 data = data.sort_values(by='name')
 data.to_pickle('description.pkl')
 
-#tmp = pd.read_pickle('description.pkl')
-#tmp = tmp.sort_values(by='name')
-#print(tmp)
+# tmp = pd.read_pickle('description.pkl')
+# tmp = tmp.sort_values(by='name')
+# print(tmp)
 
 '''print(wav_lst[:5])
 print(sentence_lst[:5])
