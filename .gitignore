@@ -188,6 +188,7 @@ IEMOCAP_full_release_withoutVideos.tar.gz
 IEMOCAP_full_release/
 audio_vec.pkl
 data/
+description.pkl
 
 # test file
 tmp.py
