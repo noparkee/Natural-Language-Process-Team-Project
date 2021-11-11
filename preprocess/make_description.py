@@ -59,7 +59,7 @@ label_pd = pd.DataFrame({'name': label_file_name, 'label': label_lst, 'v': v_lst
 
 data = pd.merge(sentence_pd, label_pd)
 data = data.sort_values(by='name')
-data.to_pickle('description.pkl')
+data.to_pickle('../data/description.pkl')
 
 # tmp = pd.read_pickle('description.pkl')
 # tmp = tmp.sort_values(by='name')

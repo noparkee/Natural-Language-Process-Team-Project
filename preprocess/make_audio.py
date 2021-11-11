@@ -3,7 +3,7 @@ import librosa
 import pickle
 
 #import file description
-data = pd.read_pickle('data/description.pkl')
+data = pd.read_pickle('../data/description.pkl')
 data = data[['name','wav_path']]
 data = data.sort_values(by='name')
 data
