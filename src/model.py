@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import numpy as np
 import pickle
 
@@ -22,5 +23,7 @@ class AudioTextModel(torch.nn.Module):
         self.num_classes = num_classes
 
     def forward(self, x):
+        text_feature, audio_feature, label = x
+        ### 가정
         
 
