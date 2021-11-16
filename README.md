@@ -14,7 +14,7 @@
 
 ## Reference Paper
 [Empirical Interpretation of Speech Emotion Perception with Attention Based Model for Speech Emotion Recognition](http://www.interspeech2020.org/uploadfile/pdf/Thu-2-2-8.pdf)
-- 현재 SOTA
+- 현재 SOTA (paperswithcode 기준)
 - 음성만 이용해서 감정 분류
 - BiLSTM + attention
 
