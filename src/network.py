@@ -6,25 +6,32 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import torch.autograd as autograd
-from torch.nn.utils.rnn import pack_padded_sequence, pad_packed_sequence
+from torch.nn.utils.rnn import pad_sequence, pack_padded_sequence, pad_packed_sequence
 
 from transformers import BertTokenizer, BertModel
 
-class AudioFeaturizer(torch.nn.Module):
-    def __init__(self, projection_size):        # projection size 채워야해
+# +
+### featurizer 모음
+# -
+
+class AudioFeaturizer(torch.nn.Module):   # LSTM + dense
+    ### mfcc 벡터를 LSTM에 통과 시켜서 last hidden state return
+    def __init__(self):
         super(AudioFeaturizer, self).__init__()
         
-        ### 나중에 여유되면 config
-        self.lstm = nn.LSTM(4020, 768, batch_first=True)
+        self.lstm = nn.LSTM(input_size=20, hidden_size=768, num_layers=1, batch_first=True)
 
-    def forward(self, x):
+    def forward(self, x):   # 여기서 x는 list of tensor list(tensor)
+        
+        x = pad_sequence(x, batch_first=True, padding_value=0)  # padding_value 고민해야함
+        x = pack_padded_sequence(x, l, batch_first=True, enforce_sorted=False)
         x, state = self.lstm(x)
-        #a_feature = self.linear(state[0])
 
-        return state[0]
+        return state[0]   # hidden state
 
 class BertEmbed(torch.nn.Module):
     def __init__(self):
+        ### sentence를 받아서 BERT를 통해 벡터화
         super(BertEmbed, self).__init__()
 
         self.tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
@@ -46,7 +53,8 @@ class BertEmbed(torch.nn.Module):
 
             return sentences_embed
 
-class EmotionClassifier(torch.nn.Module):
+### 현재는 사용 안 함
+class EmotionClassifier(torch.nn.Module):   # Dense
     def __init__(self, num_classes):
         super(EmotionClassifier, self).__init__()
         

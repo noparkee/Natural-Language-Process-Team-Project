@@ -190,10 +190,6 @@ audio_vec.pkl
 data/
 description.pkl
 
-# test file
-tmp.py
-t.py
-
 # reference file
 data_loader_ref.ipynb
 
