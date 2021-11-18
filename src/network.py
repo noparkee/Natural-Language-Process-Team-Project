@@ -21,9 +21,9 @@ class AudioFeaturizer(torch.nn.Module):   # LSTM + dense
         
         self.lstm = nn.LSTM(input_size=20, hidden_size=768, num_layers=1, batch_first=True)
 
-    def forward(self, x):   # 여기서 x는 list of tensor list(tensor)
+    def forward(self, x, l):   # 여기서 x는 list of tensor list(tensor)
         
-        x = pad_sequence(x, batch_first=True, padding_value=0)  # padding_value 고민해야함
+        #x = pad_sequence(x, batch_first=True, padding_value=0)
         x = pack_padded_sequence(x, l, batch_first=True, enforce_sorted=False)
         x, state = self.lstm(x)
 
@@ -36,22 +36,25 @@ class BertEmbed(torch.nn.Module):
 
         self.tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
         self.bert = BertModel.from_pretrained('bert-base-uncased', output_hidden_states = True)
-
-        def forward(self, x):
-            token = self.tokenizer.encode(x, add_special_tokens=True, padding=True)
-            
-            input_tensor = torch.tensor(token.data['input_ids'])
-            token_type_ids_tensor = torch.tensor(token.data['token_type_ids'])
-            attention_mask_tensor = torch.tensor(token.data['attention_mask'])
-
-            bert_x = self.bert(input_tensor,
+        
+    def forward(self, x):
+        device = torch.device("cuda" if torch.cuda.is_available() else "cpu") 
+        token = self.tokenizer(x, add_special_tokens=True, padding=True)
+        
+        input_tensor = torch.tensor(token.data['input_ids']).to(device)
+        token_type_ids_tensor = torch.tensor(token.data['token_type_ids']).to(device)
+        attention_mask_tensor = torch.tensor(token.data['attention_mask']).to(device)
+        
+        ##################
+#        with torch.no_grad():
+        bert_x = self.bert(input_tensor,
                         token_type_ids=token_type_ids_tensor,
                         attention_mask=attention_mask_tensor,)
             
-            token_hidden = torch.stack(bert_x[2], dim=0).permute(0, 1, 2, 3)
-            sentences_embed = torch.mean(token_hidden[-2], dim=1)
-
-            return sentences_embed
+        token_hidden = torch.stack(bert_x[2], dim=0).permute(0, 1, 2, 3)
+        sentences_embed = torch.mean(token_hidden[-2], dim=1)
+        
+        return sentences_embed
 
 ### 현재는 사용 안 함
 class EmotionClassifier(torch.nn.Module):   # Dense

@@ -71,3 +71,47 @@ print(label_lst[:5])
 
 print(sentence_file_name[:5])
 print(label_file_name[:5])'''
+
+data = pd.read_pickle('../data/description.pkl')
+list(set(data['label']))
+
+list(data['label']).count('xxx')
+
+list(data['label']).count('oth')
+
+label_lst = ['xxx', 'ang', 'hap', 'exc', 'sad', 'fru', 'neu', 'sur', 'oth', 'fea']
+for l in label_lst:
+    print(list(data['label']).count(l))
+
+
+def to_number(x):
+    if x == 'xxx':
+        return 0
+    if x == 'ang':
+        return 1
+    if x == 'hap':
+        return 2
+    if x == 'exc':
+        return 3
+    if x == 'sad':
+        return 4
+    if x == 'fru':
+        return 5
+    if x == 'neu':
+        return 6
+    if x == 'sur':
+        return 7
+    if x == 'oth':
+        return 8
+    if x == 'fea':
+        return 9
+
+
+label_num = list(map(to_number, data['label']))
+label_num
+
+data['label_num'] = label_num
+
+data.to_pickle('../data/description.pkl')
+
+

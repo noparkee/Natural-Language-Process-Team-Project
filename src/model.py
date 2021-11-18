@@ -4,11 +4,11 @@ import pickle
 
 import torch
 import torch.nn as nn
-import torch.nn.functional as f
+import torch.nn.functional as F
 import torch.autograd as autograd
 from torch.nn.utils.rnn import pack_padded_sequence, pad_packed_sequence
 
-from src.networks import AudioFeaturizer, BertEmbed, EmotionClassifier
+from network import AudioFeaturizer, BertEmbed, EmotionClassifier
 
 def get_optimizer(params):
     LEARNING_RATE = 0.001
@@ -19,7 +19,7 @@ def get_optimizer(params):
 
 
 class AudioTextModel(torch.nn.Module):
-    def __init(self, num_classes):
+    def __init__(self, num_classes):
         super(AudioTextModel, self).__init__()
         self.textEmbedding = BertEmbed()
         self.audioEmbedding = AudioFeaturizer()
@@ -35,45 +35,49 @@ class AudioTextModel(torch.nn.Module):
 
 
     def update(self, minibatch):
-        # mfcc: list of tensor
-        text, mfcc, label = x
+        # list, tensor, list, list 
+        text, mfcc, mfcc_len, label = minibatch
         
         cls_loss = 0
         
         text_embed = self.textEmbedding(text)
-        audio_embed = self.audioEmbedding(mfcc)
+        audio_embed = self.audioEmbedding(mfcc, mfcc_len)
         
         text_features = self.text_projection(text_embed)
-        audio_features = self.audio_projection(audio_embed)
+        audio_features = torch.squeeze(self.audio_projection(audio_embed), dim=0)
+        
         features = torch.cat((text_features, audio_features), dim=1)
         
         cls_outputs = self.classifier(features)
         cls_loss = F.cross_entropy(cls_outputs, label)
         ###cls_loss = F.softmax(cls_outputs, dim=1)
         
+        loss = cls_loss
+        
         self.optimizer.zero_grad()
-        cls_loss.backward()
+        loss.backward()
         self.optimizer.step()
         
-        return OrderedDict({'cls_loss': cls_loss })
+        return {'loss': loss.item()}
 
         
         
     def evaluate(self, minibatch):
-        text, mfcc, label = minibatch  # 추후에 text는 ASR로 변경 일단은 주어진 transcript 이용
+        text, mfcc, mfcc_len, label = minibatch
 
         text_embed = self.textEmbedding(text)
-        audio_embed = self.audioEmbedding(mfcc)
+        audio_embed = self.audioEmbedding(mfcc, mfcc_len)
         
+        #with torch.no_grad():
         text_features = self.text_projection(text_embed)
-        audio_features = self.audio_projection(audio_embed)
+        audio_features = torch.squeeze(self.audio_projection(audio_embed), dim=0)
         features = torch.cat((text_features, audio_features), dim=1)
         
         cls_outputs = self.classifier(features)
         
         correct = (cls_outputs.argmax(1).eq(label).float()).sum()
         
-        total = float(len(x))
+        total = float(len(text))
 
         return correct, total
 
