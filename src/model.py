@@ -58,7 +58,8 @@ class AudioTextModel(torch.nn.Module):
         loss.backward()
         self.optimizer.step()
         
-        return {'loss': loss.item()}
+        #return {'loss': loss.item()}
+        return loss.item()
 
         
         

@@ -4,7 +4,7 @@ import numpy as np
 import os
 import re
 
-PARENT_PATH = 'data/IEMOCAP_full_release/Session'
+PARENT_PATH = '../data/IEMOCAP_full_release/Session'
 DIALOG_PATH = '/dialog/transcriptions/'
 WAV_PATH = '/sentences/wav/'
 EMOTION_PATH = '/dialog/EmoEvaluation/'
@@ -16,18 +16,22 @@ label_lst = []
 v_lst, a_lst, d_lst = [], [], []
 label_file_name = []
 
+# +
 # [6.2901 - 8.2357]	Ses01F_impro01_F000	neu	[2.5000, 2.5000, 2.5000]
-for i in range(1, 6):
-    PATH_S = PARENT_PATH + str(i) + DIALOG_PATH
-    PATH_E = PARENT_PATH + str(i) + EMOTION_PATH
-    file_list = os.listdir(PATH_S)
 
+# Session1 ~ Session5
+for i in range(1, 6):
+    
+    PATH_S = PARENT_PATH + str(i) + DIALOG_PATH     # Session1/dialog/transcriptions (contains Ses01F_impro01.txt)
+    PATH_E = PARENT_PATH + str(i) + EMOTION_PATH    # Session1/dialog/EmoEvaluation (contains Ses01F_impro01.txt)
+    file_list = os.listdir(PATH_S)   # Ses01F_impro01.txt
+
+    
     for f in file_list:
         SENTENCE_FILE = open(PATH_S+f, 'r')
         EMOTION_FILE = open(PATH_E+f, 'r')
         while True:
             line_s = SENTENCE_FILE.readline()
-            line_e = EMOTION_FILE.readline()
             if not line_s:
                 break
             
@@ -36,10 +40,15 @@ for i in range(1, 6):
                 folder = re.findall("(S.*_.*)_(.*)", s[0][0])
                 wav, sentence = (PARENT_PATH + str(i) + WAV_PATH + folder[0][0] + '/' + s[0][0] + '.wav'), s[0][1]
                 wav_lst.append(wav)
-                #print(wav)
+                #print(s[0][0])
                 #input()
                 sentence_lst.append(sentence)
                 sentence_file_name.append(s[0][0])
+
+        while True:
+            line_e = EMOTION_FILE.readline()
+            if not line_e:
+                break
 
             e = re.findall("\[.*\]\s(S.*)\s(.*)\s\[(.*), (.*), (.*)\]", line_e)
             if len(e) != 0:
@@ -49,10 +58,29 @@ for i in range(1, 6):
                 a_lst.append(a)
                 d_lst.append(d)
                 label_file_name.append(e[0][0])
+                #print(e[0][0]+" "+label)
+                #print()
+
 
 
         SENTENCE_FILE.close()
         EMOTION_FILE.close()
+
+# +
+#10087
+len(wav_lst)
+len(sentence_lst)
+len(sentence_file_name)
+#10039
+len(label_lst)
+len(label_file_name)
+
+len(wav_lst), len(d_lst)
+#label_file_name
+
+## 3: (2158, 2136)
+## 5: (2196, 2170)
+# -
 
 sentence_pd = pd.DataFrame({'name': sentence_file_name, 'wav_path': wav_lst, 'sentence': sentence_lst})
 label_pd = pd.DataFrame({'name': label_file_name, 'label': label_lst, 'v': v_lst, 'a': a_lst, 'd': d_lst})
@@ -72,39 +100,43 @@ print(label_lst[:5])
 print(sentence_file_name[:5])
 print(label_file_name[:5])'''
 
-data = pd.read_pickle('../data/description.pkl')
-list(set(data['label']))
+data = pd.read_pickle("../data/description.pkl")
+list(set(data["label"]))
+
+list(set(data["label_num"]))
 
 list(data['label']).count('xxx')
 
 list(data['label']).count('oth')
 
-label_lst = ['xxx', 'ang', 'hap', 'exc', 'sad', 'fru', 'neu', 'sur', 'oth', 'fea']
+label_lst = ['fru', 'neu', 'hap', 'sad', 'sur', 'dis', 'xxx', 'exc', 'oth', 'fea', 'ang']
 for l in label_lst:
-    print(list(data['label']).count(l))
+    print(l + ' ' + str(list(data['label']).count(l)))
 
 
 def to_number(x):
-    if x == 'xxx':
+    if x == 'fru':
         return 0
-    if x == 'ang':
+    if x == 'neu':
         return 1
     if x == 'hap':
         return 2
-    if x == 'exc':
-        return 3
     if x == 'sad':
-        return 4
-    if x == 'fru':
-        return 5
-    if x == 'neu':
-        return 6
+        return 3
     if x == 'sur':
+        return 4
+    if x == 'dis':
+        return 5
+    if x == 'xxx':
+        return 6
+    if x == 'exc':
         return 7
     if x == 'oth':
         return 8
     if x == 'fea':
         return 9
+    if x == 'ang':
+        return 10
 
 
 label_num = list(map(to_number, data['label']))

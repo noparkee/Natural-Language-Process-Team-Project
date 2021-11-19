@@ -6,7 +6,7 @@ import numpy as np
 
 word = pd.read_pickle('../data' + '/description.pkl')
 label_words = word['label'].unique()
-label_num = [0,1,2,3,4,5,6,7,8,9]
+label_num = [0,1,2,3,4,5,6,7,8,9,10]
 word
 
 
@@ -26,7 +26,10 @@ class ourDataset(Dataset):
 
         ##audio feature
         #self.mfcc = audio['mfcc']
-        self.mfcc_tensor = torch.nn.utils.rnn.pad_sequence(audio['mfcc_tensor'].tolist(),batch_first=True, padding_value=0)
+        
+        #self.mfcc_tensor = torch.nn.utils.rnn.pad_sequence(audio['mfcc_tensor'].tolist(),batch_first=True, padding_value=0)
+        
+        self.mfcc_tensor = audio['mfcc_tensor'].tolist()
         self.mfcc_len = audio['len'].tolist()
 
         ##v,a,d
@@ -49,10 +52,13 @@ class ourDataset(Dataset):
 
 
 def collate_fn(batch):
-    sentence, audio_embed, audio_len, label = zip(*batch)
+    sentence, audio_embedt, audio_len, label = zip(*batch)
     
     sentence = list(sentence)
-    audio_embed = torch.stack(audio_embed, 0)
+    #audio_embed = torch.stack(audio_embed, 0)
+    
+    #batch 단위로 padding
+    audio_embed = torch.nn.utils.rnn.pad_sequence(audio_embedt, batch_first=True)
     audio_len = list(audio_len)
     label = torch.tensor(label)
     
@@ -62,10 +68,10 @@ def get_data_iterators():
     BATCH_SIZE = 32
     
     dataset = ourDataset()
-    dataset_train, dataset_test = torch.utils.data.random_split(dataset, [1000, 391])
+    dataset_train, dataset_test = torch.utils.data.random_split(dataset, [6000, 4039])
   
-    train_loader = DataLoader(dataset, batch_size=BATCH_SIZE, shuffle=True, num_workers=1, drop_last=True, collate_fn=collate_fn)
-    test_loader = DataLoader(dataset, batch_size=BATCH_SIZE, shuffle=True, num_workers=1, drop_last=True, collate_fn=collate_fn)
+    train_loader = DataLoader(dataset_train, batch_size=BATCH_SIZE, shuffle=True, num_workers=1, drop_last=True, collate_fn=collate_fn)
+    test_loader = DataLoader(dataset_test, batch_size=BATCH_SIZE, shuffle=True, num_workers=1, drop_last=True, collate_fn=collate_fn)
 
     return train_loader, test_loader
 
