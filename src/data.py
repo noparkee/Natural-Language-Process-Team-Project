@@ -7,6 +7,7 @@ import numpy as np
 word = pd.read_pickle('../data' + '/description.pkl')
 label_words = word['label'].unique()
 label_num = [0,1,2,3,4,5,6,7,8,9]
+word
 
 
 ### Dataset 상속
