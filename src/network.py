@@ -19,7 +19,7 @@ class AudioFeaturizer(torch.nn.Module):   # LSTM + dense
     def __init__(self):
         super(AudioFeaturizer, self).__init__()
         
-        self.lstm = nn.LSTM(input_size=20, hidden_size=768, num_layers=1, batch_first=True)
+        self.lstm = nn.LSTM(input_size=20, hidden_size=768, num_layers=2, batch_first=True)
 
     def forward(self, x, l):   # 여기서 x는 list of tensor list(tensor)
         
@@ -27,7 +27,7 @@ class AudioFeaturizer(torch.nn.Module):   # LSTM + dense
         x = pack_padded_sequence(x, l, batch_first=True, enforce_sorted=False)
         x, state = self.lstm(x)
 
-        return state[0]   # hidden state
+        return state[0][1]   # hidden state
 
 class BertEmbed(torch.nn.Module):
     def __init__(self):

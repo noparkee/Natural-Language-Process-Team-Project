@@ -27,10 +27,9 @@ class AudioTextModel(torch.nn.Module):
         self.text_projection = nn.Linear(768, 512)
         self.audio_projection = nn.Linear(768, 512)
         
-        self.classifier = nn.Linear(1024, num_classes)
-
         self.num_classes = num_classes
-        
+        self.classifier = nn.Linear(1024, self.num_classes)
+
         self.optimizer = get_optimizer(self.parameters())
 
 
@@ -39,27 +38,36 @@ class AudioTextModel(torch.nn.Module):
         text, mfcc, mfcc_len, label = minibatch
         
         cls_loss = 0
-        
+
         text_embed = self.textEmbedding(text)
         audio_embed = self.audioEmbedding(mfcc, mfcc_len)
         
         text_features = self.text_projection(text_embed)
-        audio_features = torch.squeeze(self.audio_projection(audio_embed), dim=0)
-        
+        audio_features = self.audio_projection(torch.squeeze(audio_embed, dim=0))
         features = torch.cat((text_features, audio_features), dim=1)
         
         cls_outputs = self.classifier(features)
         cls_loss = F.cross_entropy(cls_outputs, label)
-        ###cls_loss = F.softmax(cls_outputs, dim=1)
-        
-        loss = cls_loss
+
+        '''
+        threshold 이상이 아니면 xxx로 예측하도록..? <-- 이 부분은 학습할 때는 상관없고 evaluate할 때 필요해보이는데
+        '''
+
+        sd = (cls_outputs ** 2).mean()
+        sd_loss = 0.1 * sd
+
+        loss = cls_loss + sd_loss
         
         self.optimizer.zero_grad()
         loss.backward()
         self.optimizer.step()
+
+        ###
+        correct = (cls_outputs.argmax(1).eq(label).float()).sum()
+        total = float(len(text))
         
         #return {'loss': loss.item()}
-        return loss.item()
+        return correct, total, cls_loss.item()
 
         
         
@@ -77,10 +85,11 @@ class AudioTextModel(torch.nn.Module):
         cls_outputs = self.classifier(features)
         
         correct = (cls_outputs.argmax(1).eq(label).float()).sum()
-        
         total = float(len(text))
 
-        return correct, total
+        cls_loss = F.cross_entropy(cls_outputs, label)
+        sd = (cls_outputs ** 2).mean()
+        sd_loss = 0.1 * sd
+        loss = cls_loss + sd_loss
 
-
-
+        return correct, total, loss.item()

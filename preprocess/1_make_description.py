@@ -144,6 +144,48 @@ label_num
 
 data['label_num'] = label_num
 
-data.to_pickle('../data/description.pkl')
+# +
+# --- #
+# -
+
+data = pd.read_pickle("../data/description.pkl")
+
+lst = ['xxx', 'dis', 'oth', 'fea']
+for l in lst:
+    data = data.drop(data[data['label'] == l].index)
+
+data.loc[data['label'] == 'sur', 'label'] = 'exc'
+
+list(set(data["label"]))
+
+
+def to_number(x):
+    if x == 'fru':
+        return 0
+    if x == 'neu':
+        return 1
+    if x == 'hap':
+        return 2
+    if x == 'sad':
+        return 3
+    if x == 'exc':
+        return 4
+    if x == 'ang':
+        return 5
+
+
+label_num = list(map(to_number, data['label']))
+data['label_num'] = label_num
+
+data
+
+data = data.reset_index(drop=True)
+
+data.to_pickle('../data/description2.pkl')
+
+data = pd.read_pickle('../data/description2.pkl')
+
+for l in list(set(data["label"])):
+    print(l + ' ' + str(list(data['label']).count(l)))
 
 
