@@ -71,7 +71,7 @@ def get_data_iterators():
     BATCH_SIZE = 64
     NUM_WORKERS = 12
     DROP_LAST = True
-    SHUFFLE = True
+    SHUFFLE = False
     
     ## Total 7487
     NUM_TRAIN = int(7487 * 0.7)

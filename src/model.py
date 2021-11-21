@@ -24,11 +24,11 @@ class AudioTextModel(torch.nn.Module):
         self.textEmbedding = BertEmbed()
         self.audioEmbedding = AudioFeaturizer()
         
-        self.text_projection = nn.Linear(768, 512)
-        self.audio_projection = nn.Linear(768, 512)
+        self.text_projection = nn.Linear(768, 256)      # 256
+        self.audio_projection = nn.Linear(768, 256)     # 256
         
         self.num_classes = num_classes
-        self.classifier = nn.Linear(1024, self.num_classes)
+        self.classifier = nn.Linear(512, self.num_classes)      # 512
 
         self.optimizer = get_optimizer(self.parameters())
 
@@ -54,7 +54,7 @@ class AudioTextModel(torch.nn.Module):
         '''
 
         sd = (cls_outputs ** 2).mean()
-        sd_loss = 0.1 * sd
+        sd_loss = 0.5 * sd
 
         loss = cls_loss + sd_loss
         
