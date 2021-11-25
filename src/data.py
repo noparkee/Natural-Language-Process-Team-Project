@@ -4,6 +4,8 @@ import pandas as pd
 from torch.utils.data import Dataset, DataLoader
 import numpy as np
 
+import os
+
 word = pd.read_pickle('../data' + '/description.pkl')
 #label_words = word['label'].unique()
 #label_num = [0,1,2,3,4,5,6,7,8,9,10]
@@ -33,9 +35,9 @@ class ourDataset(Dataset):
         self.mfcc_len = audio['len'].tolist()
 
         ##v,a,d
-        self.v = word['v']
-        self.a = word['a']
-        self.d = word['d']
+        self.v = word['v'].astype(float).tolist()
+        self.a = word['a'].astype(float).tolist()
+        self.d = word['d'].astype(float).tolist()
     
     ### 총 데이터의 개수를 리턴
     def __len__(self):
@@ -47,13 +49,18 @@ class ourDataset(Dataset):
         audio_embed = self.mfcc_tensor[index]
         audio_len = self.mfcc_len[index]
         label = self.label[index]
-    
-        return sentence, audio_embed, audio_len, label
+
+        v = self.v[index]
+        a = self.a[index]
+        d = self.d[index]
+
+        return sentence, audio_embed, audio_len, label, v, a, d
 
 
 def collate_fn(batch):
     ## zip: 튜플의 리스트를 리스트의 튜플로 바꿔줌
-    sentence, audio_embedt, audio_len, label = zip(*batch)
+    #sentence, audio_embedt, audio_len, label = zip(*batch)
+    sentence, audio_embedt, audio_len, label, v, a, d = zip(*batch)
     
     sentence = list(sentence)
     #audio_embed = torch.stack(audio_embed, 0)
@@ -63,20 +70,25 @@ def collate_fn(batch):
     audio_len = list(audio_len)
     label = torch.tensor(label)
     
-    return sentence, audio_embed, audio_len, label
+    v = torch.tensor(v)
+    a = torch.tensor(a)
+    d = torch.tensor(d)
+
+    return sentence, audio_embed, audio_len, label, v, a, d
 
 def get_data_iterators():
     
     ## hyperparameters
-    BATCH_SIZE = 64
+    BATCH_SIZE = 32
     NUM_WORKERS = 12
     DROP_LAST = True
     SHUFFLE = False
     
     ## Total 7487
-    NUM_TRAIN = int(7487 * 0.7)
-    NUM_TEST = 7487 - NUM_TRAIN
-    
+    TOTAL = 7487
+    NUM_TRAIN = int(TOTAL * 0.7)
+    NUM_TEST = TOTAL - NUM_TRAIN
+
     dataset = ourDataset()
     dataset_train, dataset_test = torch.utils.data.random_split(dataset, [NUM_TRAIN, NUM_TEST])
   
@@ -94,5 +106,3 @@ def set_device(batch, device):
         return batch.to(device)
     else:
         return batch
-
-

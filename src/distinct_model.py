@@ -76,6 +76,7 @@ class AudioTextModel(torch.nn.Module):
         a_loss = F.mse_loss(text_a, a) + F.mse_loss(audio_a, a) + F.mse_loss(self.lambdaa * text_a + (1-self.lambdaa) * audio_a, a)
         d_loss = F.mse_loss(text_d, d) + F.mse_loss(audio_d, d) + F.mse_loss(self.lambdad * text_d + (1-self.lambdad) * audio_d, d)
 
+
         loss = cls_loss + v_loss + a_loss + d_loss
         
         self.optimizer.zero_grad()
@@ -87,8 +88,7 @@ class AudioTextModel(torch.nn.Module):
         audio_correct = (audio_outputs.argmax(1).eq(label).float()).sum()
         correct = (outputs.argmax(1).eq(label).float()).sum()
         
-        #return text_correct, audio_correct, correct, text_loss.item(), audio_loss.item(), loss.item()
-        return correct, loss.item()
+        return text_correct, audio_correct, correct, text_loss.item(), audio_loss.item(), loss.item()
 
         
         
@@ -123,8 +123,5 @@ class AudioTextModel(torch.nn.Module):
         audio_correct = (audio_outputs.argmax(1).eq(label).float()).sum()
         correct = (outputs.argmax(1).eq(label).float()).sum()
 
-        loss = cls_loss + v_loss + a_loss + d_loss
-
         #return correct, total, loss.item()
-        #return text_correct, audio_correct, correct, text_loss.item(), audio_loss.item(), loss.item()
-        return correct, loss.item()
+        return text_correct, audio_correct, correct, text_loss.item(), audio_loss.item(), loss.item()

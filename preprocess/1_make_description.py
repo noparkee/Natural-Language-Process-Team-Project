@@ -188,4 +188,13 @@ data = pd.read_pickle('../data/description2.pkl')
 for l in list(set(data["label"])):
     print(l + ' ' + str(list(data['label']).count(l)))
 
+data
+
+data = data.sample(frac=1).reset_index(drop=True)
+data
+
+data.to_pickle('../data/description3.pkl')
+
+pd.read_pickle('../data/description3.pkl')
+
 
