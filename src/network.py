@@ -19,7 +19,7 @@ class AudioFeaturizer(torch.nn.Module):   # LSTM
     def __init__(self):
         super(AudioFeaturizer, self).__init__()
         
-        self.lstm = nn.LSTM(input_size=20, hidden_size=1024, num_layers=2, batch_first=True)
+        self.lstm = nn.LSTM(input_size=20, hidden_size=2048, num_layers=2, batch_first=True)
 
     def forward(self, x, l):   # 여기서 x는 list of tensor list(tensor)
         
@@ -35,8 +35,8 @@ class BertEmbed(torch.nn.Module):
         ### sentence를 받아서 BERT를 통해 벡터화
         super(BertEmbed, self).__init__()
 
-        self.tokenizer = BertTokenizer.from_pretrained('bert-large-uncased')
-        self.bert = BertModel.from_pretrained('bert-large-uncased', output_hidden_states = True)
+        self.tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
+        self.bert = BertModel.from_pretrained('bert-base-uncased', output_hidden_states = True)
         
         self.update_num = 0
 

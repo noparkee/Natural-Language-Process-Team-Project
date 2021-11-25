@@ -20,7 +20,7 @@ def get_optimizer(params):
 
 
 class AudioTextModel(torch.nn.Module):
-    def __init__(self, num_classes):
+    def __init__(self, batch_size, num_classes):
         super(AudioTextModel, self).__init__()
         self.textEmbedding = BertEmbed()
         self.audioEmbedding = AudioFeaturizer()

@@ -34,8 +34,6 @@ class AudioTextModel(torch.nn.Module):
         self.linear_layer = nn.Linear(512, 256)
         self.classifier = nn.Linear(256, self.num_classes)      # 512
 
-        self.lambda1 = nn.parameter.Parameter(torch.ones(1))
-
         self.vlayer1 = nn.Linear(256, 128)
         self.vlayer2 = nn.Linear(128, 1)
         self.alayer1 = nn.Linear(256, 128)
@@ -54,8 +52,8 @@ class AudioTextModel(torch.nn.Module):
         
         text_features = self.text_projection(text_embed)
         audio_features = self.audio_projection(torch.squeeze(audio_embed, dim=0))
-        features = (1-self.lambda1) * text_features + self.lambda1 * audio_features
-        #features = self.lambda1 * text_features + (1-self.lambda1) * audio_features
+        features = torch.cat((text_features, audio_features), dim=1)
+        features = self.linear_layer(F.relu(features))
 
         cls_outputs = self.classifier(features)
         cls_loss = F.cross_entropy(cls_outputs, label)
@@ -95,8 +93,8 @@ class AudioTextModel(torch.nn.Module):
         
         text_features = self.text_projection(text_embed)
         audio_features = torch.squeeze(self.audio_projection(audio_embed), dim=0)
-        features = (1-self.lambda1) * text_features + self.lambda1 * audio_features
-
+        features = torch.cat((text_features, audio_features), dim=1)
+        features = self.linear_layer(F.relu(features))
         
         cls_outputs = self.classifier(features)
         cls_loss = F.cross_entropy(cls_outputs, label)

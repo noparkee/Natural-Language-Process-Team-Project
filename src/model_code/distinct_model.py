@@ -20,14 +20,15 @@ def get_optimizer(params):
 
 
 class AudioTextModel(torch.nn.Module):
-    def __init__(self, num_classes):
+    def __init__(self, batch_size, num_classes):
         super(AudioTextModel, self).__init__()
         self.textEmbedding = BertEmbed()
         self.audioEmbedding = AudioFeaturizer()
         
-        self.text_projection = nn.Linear(1024, 512)
-        self.audio_projection = nn.Linear(1024, 512)
+        self.text_projection = nn.Linear(768, 512)
+        self.audio_projection = nn.Linear(2048, 512)
         
+        self.batch_size = batch_size
         self.num_classes = num_classes
         
         self.text_classifier = nn.Linear(512, self.num_classes)
@@ -40,10 +41,10 @@ class AudioTextModel(torch.nn.Module):
         self.audio_alayer = nn.Linear(512, 1)
         self.audio_dlayer = nn.Linear(512, 1)
 
-        self.lambda1 = nn.parameter.Parameter(torch.Tensor(1))      # for classifier
-        self.lambdav = nn.parameter.Parameter(torch.Tensor(1))      # for v
-        self.lambdaa = nn.parameter.Parameter(torch.Tensor(1))      # for a
-        self.lambdad = nn.parameter.Parameter(torch.Tensor(1))      # for d
+        self.lambda1 = nn.parameter.Parameter(torch.ones(1))      # for classifier
+        self.lambdav = nn.parameter.Parameter(torch.ones(1))      # for v
+        self.lambdaa = nn.parameter.Parameter(torch.ones(1))      # for a
+        self.lambdad = nn.parameter.Parameter(torch.ones(1))      # for d
 
         self.optimizer = get_optimizer(self.parameters())
 
@@ -60,7 +61,8 @@ class AudioTextModel(torch.nn.Module):
         
         text_outputs = self.text_classifier(text_features)
         audio_outputs = self.audio_classifier(audio_features)
-        outputs = self.lambda1 * text_outputs + (1-self.lambda1) * audio_outputs
+        
+        outputs = (1-self.lambda1) * text_outputs + self.lambda1 * audio_outputs
         
         cls_loss = F.cross_entropy(text_outputs, label) + F.cross_entropy(audio_outputs, label) + F.cross_entropy(outputs, label)
         #cls_loss += (0.5 * (outputs ** 2).mean())
@@ -76,7 +78,6 @@ class AudioTextModel(torch.nn.Module):
         a_loss = F.mse_loss(text_a, a) + F.mse_loss(audio_a, a) + F.mse_loss(self.lambdaa * text_a + (1-self.lambdaa) * audio_a, a)
         d_loss = F.mse_loss(text_d, d) + F.mse_loss(audio_d, d) + F.mse_loss(self.lambdad * text_d + (1-self.lambdad) * audio_d, d)
 
-
         loss = cls_loss + v_loss + a_loss + d_loss
         
         self.optimizer.zero_grad()
@@ -88,7 +89,8 @@ class AudioTextModel(torch.nn.Module):
         audio_correct = (audio_outputs.argmax(1).eq(label).float()).sum()
         correct = (outputs.argmax(1).eq(label).float()).sum()
         
-        return text_correct, audio_correct, correct, text_loss.item(), audio_loss.item(), loss.item()
+        #return text_correct, audio_correct, correct, text_loss.item(), audio_loss.item(), loss.item()
+        return correct, loss.item()
 
         
         
@@ -123,5 +125,8 @@ class AudioTextModel(torch.nn.Module):
         audio_correct = (audio_outputs.argmax(1).eq(label).float()).sum()
         correct = (outputs.argmax(1).eq(label).float()).sum()
 
+        loss = cls_loss + v_loss + a_loss + d_loss
+
         #return correct, total, loss.item()
-        return text_correct, audio_correct, correct, text_loss.item(), audio_loss.item(), loss.item()
+        #return text_correct, audio_correct, correct, text_loss.item(), audio_loss.item(), loss.item()
+        return correct, loss.item()

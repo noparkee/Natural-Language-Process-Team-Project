@@ -40,7 +40,7 @@ CONCAT = args.concat'''
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 print('### device: ' + str(device))
 print("### cpu num: ", os.cpu_count())
-model = AudioTextModel(num_classes=NUM_CLASSES).to(device)
+model = AudioTextModel(batch_size=BATCH_SIZE, num_classes=NUM_CLASSES).to(device)
 print("### load model")
 
 train, test = get_data_iterators()
