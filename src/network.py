@@ -25,9 +25,10 @@ class AudioFeaturizer(torch.nn.Module):   # LSTM
         
         #x = pad_sequence(x, batch_first=True, padding_value=0)
         x = pack_padded_sequence(x, l, batch_first=True, enforce_sorted=False)
+        
         x, state = self.lstm(x)
 
-        #return state[0][1]   # hidden state
+        #return state[0]   # hidden state
         return state[0][1]   # hidden state
 
 class BertEmbed(torch.nn.Module):

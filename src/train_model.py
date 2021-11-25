@@ -13,6 +13,7 @@ from data import get_data_iterators, set_device
 from model import AudioTextModel
 
 import os
+import time
 # -
 
 ## Hyperparameters
@@ -36,7 +37,6 @@ args = parser.parse_args()
 CONCAT = args.concat'''
 
 # ---
-
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 print('### device: ' + str(device))
 print("### cpu num: ", os.cpu_count())
@@ -50,6 +50,11 @@ print("### start train")
 print("\n")
 for step in range(ITER):   # epoch
         
+    starttime = time.time()
+
+    model.debuglst_test = torch.zeros(6, 6)
+    model.debuglst_train = torch.zeros(6, 6)
+
     train_correct_lst, train_loss_lst = [], []
     #text_correct_lst, audio_correct_lst, correct_lst, text_loss_lst, audio_loss_lst, loss_lst = [], [], [], [], [], []
     for batch_idx, minibatch in enumerate(train):       # 한 번의 epoch                 
@@ -76,7 +81,7 @@ for step in range(ITER):   # epoch
 
     test_correct_lst, test_loss_lst = [], []
     #text_correct_lst, audio_correct_lst, correct_lst, text_loss_lst, audio_loss_lst, loss_lst = [], [], [], [], [], []
-    for batch_idx, minibatch in enumerate(test):  
+    for batch_idx, minibatch in enumerate(test):
         minibatch = set_device(minibatch, device)
         with torch.no_grad():
             correct, loss = model.evaluate(minibatch)
@@ -91,6 +96,8 @@ for step in range(ITER):   # epoch
         
         test_correct_lst.append(correct)
         test_loss_lst.append(loss)
+
+        
     
     #if (step+1) % 10 == 0:   # 10 epoch 마다 진행상황
     #    print('# step [{}/{}], loss: {}'.format(step + 1, ITER, (sum(loss_lst)/len(loss_lst))))
@@ -107,7 +114,12 @@ for step in range(ITER):   # epoch
     print('# step [{}/{}], test loss: {}'.format(step + 1, ITER, (sum(test_loss_lst)/len(test_loss_lst))))
     print('# step [{}/{}], train accuracy: {}'.format(step + 1, ITER, (sum(train_correct_lst)/len(train_correct_lst) / BATCH_SIZE)))
     print('# step [{}/{}], test accuracy: {}'.format(step + 1, ITER, (sum(test_correct_lst)/len(test_correct_lst) / BATCH_SIZE)))
+    print("delta: ", (time.time() - starttime), "sec")
+
+    print(model.debuglst_train)
+    print(model.debuglst_test)
     print("==========")
+    
 
     '''
     if step == 0 or (step+1) % 3 == 0:   # 30 epoch 마다 evaluate

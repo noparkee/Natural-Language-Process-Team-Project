@@ -10,6 +10,7 @@ from torch.nn.utils.rnn import pack_padded_sequence, pad_packed_sequence
 
 from network import AudioFeaturizer, BertEmbed
 from network2 import AudioFeaturizer2
+from network3 import AudioFeaturizer3
 
 def get_optimizer(params):
     LEARNING_RATE = 0.001
@@ -47,8 +48,9 @@ class AudioTextModel(torch.nn.Module):
 
 
     def update(self, minibatch):
-        text, mfcc, mfcc_len, label, v, a, d = minibatch
-
+        text, mfcc, mfcc_len, label, v, a, d, images = minibatch
+        print(images.size())
+        input()
         text_embed = self.textEmbedding(text)
         audio_embed = self.audioEmbedding(mfcc, mfcc_len)
         
@@ -77,7 +79,11 @@ class AudioTextModel(torch.nn.Module):
         loss = cls_loss + sd_loss + 0.5*(v_loss + a_loss + d_loss)
         
         correct = (cls_outputs.argmax(1).eq(label).float()).sum()
-        
+
+#debug
+        for i in range(len(label)):
+           self.debuglst_train[cls_outputs.argmax(1)[i]][label[i]] += 1
+
         self.optimizer.zero_grad()
         loss.backward()
         self.optimizer.step()
@@ -88,7 +94,7 @@ class AudioTextModel(torch.nn.Module):
         
         
     def evaluate(self, minibatch):
-        text, mfcc, mfcc_len, label, v, a, d = minibatch
+        text, mfcc, mfcc_len, label, v, a, d, images = minibatch
 
         text_embed = self.textEmbedding(text)
         audio_embed = self.audioEmbedding(mfcc, mfcc_len)
@@ -117,6 +123,10 @@ class AudioTextModel(torch.nn.Module):
 
         correct = (cls_outputs.argmax(1).eq(label).float()).sum()
         total = float(len(text))
+
+#debug correct list
+        for i in range(len(label)):
+            self.debuglst_test[cls_outputs.argmax(1)[i]][label[i]] += 1
 
         loss = cls_loss + sd_loss + 0.5*(v_loss + a_loss + d_loss)
 

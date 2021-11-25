@@ -1,12 +1,14 @@
 # -*- coding: utf-8 -*-
-import torch
-import pandas as pd
-from torch.utils.data import Dataset, DataLoader
-import numpy as np
-
 import os
+import pandas as pd
+import numpy as np
+from PIL import Image
 
-word = pd.read_pickle('../data' + '/description.pkl')
+import torch
+from torchvision import transforms
+from torch.utils.data import Dataset, DataLoader
+
+#word = pd.read_pickle('../data' + '/description.pkl')
 #label_words = word['label'].unique()
 #label_num = [0,1,2,3,4,5,6,7,8,9,10]
 #word
@@ -18,13 +20,13 @@ class ourDataset(Dataset):
         ##data set 경로(루트경로)
         self.data_path = '../data'
 
-        audio = pd.read_pickle(self.data_path + '/audio_vec2.pkl')
-        word = pd.read_pickle(self.data_path + '/description2.pkl')
+        audio = pd.read_pickle(self.data_path + '/audio_vec3.pkl')
+        description = pd.read_pickle(self.data_path + '/description3.pkl')
 
         ##true y's
-        self.sentence = word['sentence']
-        #self.label = word['label']
-        self.label = word['label_num']
+        self.sentence = description['sentence']
+        #self.label = description['label']
+        self.label = description['label_num']
 
         ##audio feature
         #self.mfcc = audio['mfcc']
@@ -35,10 +37,14 @@ class ourDataset(Dataset):
         self.mfcc_len = audio['len'].tolist()
 
         ##v,a,d
-        self.v = word['v'].astype(float).tolist()
-        self.a = word['a'].astype(float).tolist()
-        self.d = word['d'].astype(float).tolist()
-    
+        self.v = description['v'].astype(float).tolist()
+        self.a = description['a'].astype(float).tolist()
+        self.d = description['d'].astype(float).tolist()
+
+        ### image
+        self.image_path = description['image_path']
+        self.transform = get_transforms()
+
     ### 총 데이터의 개수를 리턴
     def __len__(self):
         return len(self.label)
@@ -54,13 +60,18 @@ class ourDataset(Dataset):
         a = self.a[index]
         d = self.d[index]
 
-        return sentence, audio_embed, audio_len, label, v, a, d
+        ###
+        image_path = self.image_path[index]
+        image = Image.open(image_path).convert('RGB')
+        image = self.transform(image)
+        
+        return sentence, audio_embed, audio_len, label, v, a, d, image
 
 
 def collate_fn(batch):
     ## zip: 튜플의 리스트를 리스트의 튜플로 바꿔줌
     #sentence, audio_embedt, audio_len, label = zip(*batch)
-    sentence, audio_embedt, audio_len, label, v, a, d = zip(*batch)
+    sentence, audio_embedt, audio_len, label, v, a, d, images = zip(*batch)
     
     sentence = list(sentence)
     #audio_embed = torch.stack(audio_embed, 0)
@@ -74,7 +85,10 @@ def collate_fn(batch):
     a = torch.tensor(a)
     d = torch.tensor(d)
 
-    return sentence, audio_embed, audio_len, label, v, a, d
+    ###
+    images = torch.stack(images, 0)
+
+    return sentence, audio_embed, audio_len, label, v, a, d, images
 
 def get_data_iterators():
     
@@ -96,6 +110,21 @@ def get_data_iterators():
     test_loader = DataLoader(dataset_test, batch_size=BATCH_SIZE, shuffle=SHUFFLE, num_workers=NUM_WORKERS, drop_last=DROP_LAST, collate_fn=collate_fn)
 
     return train_loader, test_loader
+
+
+def get_transforms():
+    """ get transforms for CUB datasets """
+    resize, cropsize = 512, 448
+
+    transform = transforms.Compose([
+        transforms.Resize(resize),
+        transforms.CenterCrop(cropsize),
+        transforms.ToTensor(),
+        transforms.Normalize(
+            mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
+    ])
+
+    return transform
 
 
 def set_device(batch, device):
