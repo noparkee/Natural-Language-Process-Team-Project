@@ -44,9 +44,9 @@ class AudioTextModel(torch.nn.Module):
         audio_embed = self.audioEmbedding(mfcc, mfcc_len)       # (B, 2*hidden )
         #image_embed = self.imageEmbedding(images)
 
-        text_features = self.text_projection(audio_embed)
-        audio_features = self.audio_projection(torch.squeeze(audio_embed, dim=0))
-        features = torch.cat((text_features, audio_features), dim=1)
+        text_features = self.text_projection(text_embed)
+        #audio_features = self.audio_projection(torch.squeeze(audio_embed, dim=0))
+        #features = torch.cat((text_features, audio_features), dim=1)
 
         cls_outputs = self.classifier(audio_embed)
         cls_loss = F.cross_entropy(cls_outputs, label)
@@ -81,8 +81,8 @@ class AudioTextModel(torch.nn.Module):
         #image_embed = self.imageEmbedding(images)
         
         text_features = self.text_projection(text_embed)
-        audio_features = torch.squeeze(self.audio_projection(audio_embed), dim=0)
-        features = torch.cat((text_features, audio_features), dim=1)
+        #audio_features = torch.squeeze(self.audio_projection(audio_embed), dim=0)
+        #features = torch.cat((text_features, audio_features), dim=1)
 
         cls_outputs = self.classifier(audio_embed)
         cls_loss = F.cross_entropy(cls_outputs, label)
