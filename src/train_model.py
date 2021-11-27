@@ -17,12 +17,12 @@ import time
 # -
 
 ## Hyperparameters
-ITER = 100
-NUM_CLASSES = 6
+ITER = 10
+NUM_CLASSES = 5
 BATCH_SIZE = 32
 
 ## global seed 고정
-SEED = 0
+SEED = 14
 random.seed(SEED)
 np.random.seed(SEED)
 torch.manual_seed(SEED)
@@ -37,108 +37,69 @@ args = parser.parse_args()
 CONCAT = args.concat'''
 
 # ---
+#print("### pid: ", os.getpid())
+affinity_mask = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23}
+os.sched_setaffinity(0, affinity_mask)
+# ---
+
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 print('### device: ' + str(device))
-print("### cpu num: ", os.cpu_count())
 model = AudioTextModel(batch_size=BATCH_SIZE, num_classes=NUM_CLASSES).to(device)
 print("### load model")
 
-train, test = get_data_iterators()
+train, test = get_data_iterators(BATCH_SIZE)
 print("### load data")
 
 print("### start train")
 print("\n")
 for step in range(ITER):   # epoch
         
-    starttime = time.time()
+    model.debuglst_test = torch.zeros(NUM_CLASSES, NUM_CLASSES)
+    model.debuglst_train = torch.zeros(NUM_CLASSES, NUM_CLASSES)
 
-    model.debuglst_test = torch.zeros(6, 6)
-    model.debuglst_train = torch.zeros(6, 6)
+    ### training
+    train_correct, train_loss, train_num_batch = 0, 0, 0
+    train_starttime = time.time()
 
-    train_correct_lst, train_loss_lst = [], []
-    #text_correct_lst, audio_correct_lst, correct_lst, text_loss_lst, audio_loss_lst, loss_lst = [], [], [], [], [], []
-    for batch_idx, minibatch in enumerate(train):       # 한 번의 epoch                 
+    for batch_idx, minibatch in enumerate(train):       # 한 번의 epoch    
         minibatch = set_device(minibatch, device)
         correct, loss = model.update(minibatch)
         #text_correct, audio_correct, correct, text_loss, audio_loss, loss = model.update(minibatch)
-        
-        '''text_correct_lst.append(text_correct)
-        audio_correct_lst.append(audio_correct)
-        correct_lst.append(correct)
-        text_loss_lst.append(text_loss)
-        audio_loss_lst.append(audio_loss)
-        loss_lst.append(loss)'''
+    
+        train_correct += correct
+        train_loss += loss
+        train_num_batch += 1
 
-        train_correct_lst.append(correct)
-        train_loss_lst.append(loss)
-    '''print("train===")
-    print('# step [{}/{}], text loss: {}'.format(step + 1, ITER, (sum(text_loss_lst)/len(text_loss_lst))))
-    print('# step [{}/{}], audio loss: {}'.format(step + 1, ITER, (sum(audio_loss_lst)/len(audio_loss_lst))))
-    print('# step [{}/{}], train loss: {}'.format(step + 1, ITER, (sum(loss_lst)/len(loss_lst))))
-    print('# step [{}/{}], text accuracy: {}'.format(step + 1, ITER, (sum(text_correct_lst)/len(text_correct_lst) / BATCH_SIZE)))
-    print('# step [{}/{}], audio accuracy: {}'.format(step + 1, ITER, (sum(audio_correct_lst)/len(audio_correct_lst) / BATCH_SIZE)))
-    print('# step [{}/{}], train accuracy: {}'.format(step + 1, ITER, (sum(correct_lst)/len(correct_lst) / BATCH_SIZE)))'''
+    train_time = time.time()
+    
+    print('# step [{}/{}], train loss: {}'.format(step + 1, ITER, (train_loss / train_num_batch) / BATCH_SIZE))
+    print('# step [{}/{}], train accuracy: {}'.format(step + 1, ITER, (train_correct / train_num_batch) / BATCH_SIZE))
+    train_correct, train_loss, train_num_batch = 0, 0, 0
 
-    test_correct_lst, test_loss_lst = [], []
-    #text_correct_lst, audio_correct_lst, correct_lst, text_loss_lst, audio_loss_lst, loss_lst = [], [], [], [], [], []
+
+    ### testing (validation)
+    test_correct, test_loss, test_num_batch = 0, 0, 0
+    test_starttime = time.time()
     for batch_idx, minibatch in enumerate(test):
         minibatch = set_device(minibatch, device)
         with torch.no_grad():
             correct, loss = model.evaluate(minibatch)
             #text_correct, audio_correct, correct, text_loss, audio_loss, loss = model.evaluate(minibatch)
         
-        '''text_correct_lst.append(text_correct)
-        audio_correct_lst.append(audio_correct)
-        correct_lst.append(correct)
-        text_loss_lst.append(text_loss)
-        audio_loss_lst.append(audio_loss)
-        loss_lst.append(loss)'''
-        
-        test_correct_lst.append(correct)
-        test_loss_lst.append(loss)
-
-        
+        test_correct += correct
+        test_loss += loss
+        test_num_batch += 1
+    test_time = time.time()
     
-    #if (step+1) % 10 == 0:   # 10 epoch 마다 진행상황
-    #    print('# step [{}/{}], loss: {}'.format(step + 1, ITER, (sum(loss_lst)/len(loss_lst))))
-    
-    '''print("test===")
-    print('# step [{}/{}], text loss: {}'.format(step + 1, ITER, (sum(text_loss_lst)/len(text_loss_lst))))
-    print('# step [{}/{}], audio loss: {}'.format(step + 1, ITER, (sum(audio_loss_lst)/len(audio_loss_lst))))
-    print('# step [{}/{}], test loss: {}'.format(step + 1, ITER, (sum(loss_lst)/len(loss_lst))))
-    print('# step [{}/{}], text accuracy: {}'.format(step + 1, ITER, (sum(text_correct_lst)/len(text_correct_lst) / BATCH_SIZE)))
-    print('# step [{}/{}], audio accuracy: {}'.format(step + 1, ITER, (sum(audio_correct_lst)/len(audio_correct_lst) / BATCH_SIZE)))
-    print('# step [{}/{}], test accuracy: {}'.format(step + 1, ITER, (sum(correct_lst)/len(correct_lst) / BATCH_SIZE)))'''
+    print('# step [{}/{}], test loss: {}'.format(step + 1, ITER, (test_loss / test_num_batch) / BATCH_SIZE))
+    print('# step [{}/{}], test accuracy: {}'.format(step + 1, ITER, (test_correct / test_num_batch) / BATCH_SIZE))
+    test_correct, test_loss, test_num_batch = 0, 0, 0
 
-    print('# step [{}/{}], train loss: {}'.format(step + 1, ITER, (sum(train_loss_lst)/len(train_loss_lst))))
-    print('# step [{}/{}], test loss: {}'.format(step + 1, ITER, (sum(test_loss_lst)/len(test_loss_lst))))
-    print('# step [{}/{}], train accuracy: {}'.format(step + 1, ITER, (sum(train_correct_lst)/len(train_correct_lst) / BATCH_SIZE)))
-    print('# step [{}/{}], test accuracy: {}'.format(step + 1, ITER, (sum(test_correct_lst)/len(test_correct_lst) / BATCH_SIZE)))
-    print("delta: ", (time.time() - starttime), "sec")
+    print('----------')
+    print("training time: ", (train_time - train_starttime), "sec")
+    print("testing time: ", (test_time - test_starttime), "sec")
 
     print(model.debuglst_train)
     print(model.debuglst_test)
-    print("==========")
-    
 
-    '''
-    if step == 0 or (step+1) % 3 == 0:   # 30 epoch 마다 evaluate
-        correct_lst = []
-        with torch.no_grad():
-            for batch_idx, minibatch in enumerate(test):  # full test data
-                minibatch = set_device(minibatch, device)
-                correct, loss = model.evaluate(minibatch)
-                correct_lst.append(correct)
-            #print(str(step+1) + " epoch, eval: " + str(((sum(correct_lst)/len(correct_lst)) / 32).item()))
-            print('# step [{}/{}], accuracy: {}'.format(step + 1, ITER, ((((sum(correct_lst)/len(correct_lst)) / 32).item()))))
-    '''
-'''
-# last
-correct_lst = []
-with torch.no_grad():
-    for batch_idx, minibatch in enumerate(test):  # full test data
-        minibatch = set_device(minibatch, device)
-        correct, loss = model.evaluate(minibatch)
-        correct_lst.append(correct)
-    print("last epoch, eval: " + str(((sum(correct_lst)/len(correct_lst)) / 32).item()))
-'''
+    print("==========\n")

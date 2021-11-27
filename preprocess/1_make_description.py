@@ -197,4 +197,34 @@ data.to_pickle('../data/description3.pkl')
 
 pd.read_pickle('../data/description3.pkl')
 
+data = pd.read_pickle('../data/description2.pkl')
+list(set(data['label']))
+
+data.loc[data['label'] == 'hap', 'label'] = 'exc'
+
+list(set(data['label']))
+
+
+def to_number(x):
+    if x == 'neu':
+        return 0
+    if x == 'exc':
+        return 1
+    if x == 'sad':
+        return 2
+    if x == 'fru':
+        return 3
+    if x == 'ang':
+        return 4
+
+
+label_num = list(map(to_number, data['label']))
+data['label_num'] = label_num
+
+data.to_pickle('../data/description4.pkl')
+
+lst = list(set(data['label']))
+for l in lst:
+    print(l, list(data['label']).count(l))
+
 
