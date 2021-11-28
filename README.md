@@ -1,6 +1,6 @@
 # Natural-Language-Process-Team-Project
 2021 COSE461 Team 14   
-[@noparkee](https://github.com/noparkee) [@jooeun9199](https://github.com/jooeun9199) [@Xenor99](https://github.com/Xenor99)
+[@noparkee](https://github.com/noparkee) [@Xenor99](https://github.com/Xenor99) [@jooeun9199](https://github.com/jooeun9199)
 
 # SER with TextEmbedding
 감정 분류를 하자!
