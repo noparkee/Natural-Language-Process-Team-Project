@@ -54,21 +54,21 @@ class AudioTextModel(torch.nn.Module):
         features = torch.cat((text_features, audio_features, image_features), dim=1)
 
         cls_outputs = self.classifier(features)
-        v_outputs = self.vlayer(features)
-        a_outputs = self.alayer(features)
-        d_outputs = self.dlayer(features)
+        #v_outputs = self.vlayer(features)
+        #a_outputs = self.alayer(features)
+        #d_outputs = self.dlayer(features)
 
         cls_loss = F.cross_entropy(cls_outputs, label)
-        v_loss = F.mse_loss(torch.squeeze(v_outputs, dim=1), v)
-        a_loss = F.mse_loss(torch.squeeze(a_outputs, dim=1), a)
-        d_loss = F.mse_loss(torch.squeeze(d_outputs, dim=1), d)
+        #v_loss = F.mse_loss(torch.squeeze(v_outputs, dim=1), v)
+        #a_loss = F.mse_loss(torch.squeeze(a_outputs, dim=1), a)
+        #d_loss = F.mse_loss(torch.squeeze(d_outputs, dim=1), d)
 
         sd = (cls_outputs ** 2).mean()
         sd_loss = 0.5 * sd
         
         correct = (cls_outputs.argmax(1).eq(label).float()).sum()
 
-        loss = cls_loss + 0.5*(v_loss + a_loss + d_loss) + sd_loss
+        loss = cls_loss + sd_loss #+ 0.5*(v_loss + a_loss + d_loss)
         #+ F.cross_entropy(text_outputs, label) + F.cross_entropy(audio_outputs, label) + F.cross_entropy #+ 0.5*(v_loss + a_loss + d_loss)
 
         #debug
@@ -97,14 +97,14 @@ class AudioTextModel(torch.nn.Module):
         features = torch.cat((text_features, audio_features, image_features), dim=1)
 
         cls_outputs = self.classifier(features)
-        v_outputs = self.vlayer(features)
-        a_outputs = self.alayer(features)
-        d_outputs = self.dlayer(features)
+        #v_outputs = self.vlayer(features)
+        #a_outputs = self.alayer(features)
+        #d_outputs = self.dlayer(features)
 
         cls_loss = F.cross_entropy(cls_outputs, label)
-        v_loss = F.mse_loss(torch.squeeze(v_outputs, dim=1), v)
-        a_loss = F.mse_loss(torch.squeeze(a_outputs, dim=1), a)
-        d_loss = F.mse_loss(torch.squeeze(d_outputs, dim=1), d)
+        #v_loss = F.mse_loss(torch.squeeze(v_outputs, dim=1), v)
+        #a_loss = F.mse_loss(torch.squeeze(a_outputs, dim=1), a)
+        #d_loss = F.mse_loss(torch.squeeze(d_outputs, dim=1), d)
         
         sd = (cls_outputs ** 2).mean()
         sd_loss = 0.5 * sd
@@ -112,7 +112,7 @@ class AudioTextModel(torch.nn.Module):
         correct = (cls_outputs.argmax(1).eq(label).float()).sum()
         #total = float(len(text))
 
-        loss = cls_loss + 0.5*(v_loss + a_loss + d_loss) + sd_loss
+        loss = cls_loss + sd_loss #+ 0.5*(v_loss + a_loss + d_loss)
         #F.cross_entropy(text_outputs, label) + F.cross_entropy(audio_outputs, label) + F.cross_entropy #+ 0.5*(v_loss + a_loss + d_loss)
 
         #debug correct list
