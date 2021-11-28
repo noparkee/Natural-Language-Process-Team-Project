@@ -45,26 +45,26 @@ class AudioFeaturizer(torch.nn.Module):   # LSTM
 
         y = torch.cat((state[0][-2], state[0][-1]), dim=1)    # (B, 2 * h)
 
-        y = y.unsqueeze(dim=1)  # (B, 1, 2 * h)
-        y = torch.relu(self.cnn_0(y))   # (B, 128, 2 * h - 4)
+        # y = y.unsqueeze(dim=1)  # (B, 1, 2 * h)
+        # y = self.cnn_0(y)  # (B, 128, 2 * h - 4)
         
-        y = self.batchNorm_1(y)
-        y = torch.relu(self.cnn_2(y)) 
-        y = torch.relu(self.cnn_3(y))   # (B, 128, 2 * h - 4)
+        # y = self.batchNorm_1(y)
+        # y = self.cnn_2(y) 
+        # # y = self.cnn_3(y)   # (B, 128, 2 * h - 4)
         
-        y = self.maxPool_4(y) # (B, 128, h - 2)
-        y = self.batchNorm_5(y)
+        # y = self.maxPool_4(y) # (B, 128, h - 2)
+        # y = self.batchNorm_5(y)
     
-        jy = self.cnn_j(y) # (B, 16, h - 2)
-        ky = self.cnn_k(y) # (B, 16, h - 2)
-        ly = self.cnn_l(y) # (B, 128, h - 2)
+        # jy = self.cnn_j(y) # (B, 16, h - 2)
+        # ky = self.cnn_k(y) # (B, 16, h - 2)
+        # ly = self.cnn_l(y) # (B, 128, h - 2)
 
-        E = torch.bmm(jy.permute(0, 2, 1), ky)  # (B, h - 2, h - 2)
+        # E = torch.bmm(jy.permute(0, 2, 1), ky)  # (B, h - 2, h - 2)
         
-        E = E.view(-1).softmax(0).view(*E.shape)
-        A = torch.bmm(ly, E) # (B, 128, h - 2)
+        # E = E.view(-1).softmax(0).view(*E.shape)
+        # A = torch.bmm(ly, E) # (B, 128, h - 2)
 
-        context_vector = y + self.gamma * A # (B, 128, h - 2)
+        context_vector = y #+ self.gamma * A # (B, 128, h - 2)
 
         return context_vector       # (B, 128, h - 2)
 

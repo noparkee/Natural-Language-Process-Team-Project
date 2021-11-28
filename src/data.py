@@ -48,8 +48,8 @@ class ourDataset(Dataset):
         self.d = description['d'].astype(float).tolist()
 
         ### image
-        # self.image_path = description['image_path']
-        # self.transform = get_transforms()
+        self.image_path = description['image_path']
+        self.transform = get_transforms()
 
     ### 총 데이터의 개수를 리턴
     def __len__(self):
@@ -67,18 +67,18 @@ class ourDataset(Dataset):
         d = self.d[index]
 
         ###
-        # image_path = self.image_path[index]
-        # image = Image.open(image_path).convert('RGB')
-        # image = self.transform(image)
+        image_path = self.image_path[index]
+        image = Image.open(image_path).convert('RGB')
+        image = self.transform(image)
         
-        #return sentence, audio_embed, audio_len, label, v, a, d
-        return sentence, audio_embed, audio_len, label, v, a, d#, image
+        # return sentence, audio_embed, audio_len, label, v, a, d
+        return sentence, audio_embed, audio_len, label, v, a, d, image
 
 
 def collate_fn(batch):
     ## zip: 튜플의 리스트를 리스트의 튜플로 바꿔줌
-    sentence, audio_embedt, audio_len, label,  v, a, d = zip(*batch)
-    # sentence, audio_embedt, audio_len, label, v, a, d, images = zip(*batch)
+    # sentence, audio_embedt, audio_len, label,  v, a, d = zip(*batch)
+    sentence, audio_embedt, audio_len, label, v, a, d, images = zip(*batch)
     
     sentence = list(sentence)
     #audio_embed = torch.stack(audio_embed, 0)
@@ -93,10 +93,10 @@ def collate_fn(batch):
     d = torch.tensor(d)
 
     ###
-    # images = torch.stack(images, 0)
+    images = torch.stack(images, 0)
 
-    return sentence, audio_embed, audio_len, label, v, a, d
-    # return sentence, audio_embed, audio_len, label, v, a, d, images
+    # return sentence, audio_embed, audio_len, label, v, a, d
+    return sentence, audio_embed, audio_len, label, v, a, d, images
 
 def get_data_iterators(BATCH_SIZE):
     ## hyperparameters

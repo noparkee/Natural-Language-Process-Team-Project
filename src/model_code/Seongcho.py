@@ -11,7 +11,7 @@ from torch.nn.utils.rnn import pack_padded_sequence, pad_packed_sequence
 from network_code.network4 import AudioFeaturizer, BertEmbed
 
 def get_optimizer(params):
-    LEARNING_RATE = 0.0001x c
+    LEARNING_RATE = 0.0001
     WEIGHT_DECAY = 0
     optimizer = torch.optim.Adam(params, lr=LEARNING_RATE, weight_decay=WEIGHT_DECAY)
 
@@ -28,7 +28,8 @@ class AudioTextModel(torch.nn.Module):
         self.num_classes = num_classes
         
         self.text_classifier = nn.Linear(1024, self.num_classes)
-        self.audio_classifier = nn.Linear(510 * 128, self.num_classes)
+        # self.audio_classifier = nn.Linear(510 * 128, self.num_classes)
+        self.audio_classifier = nn.Linear(1024, self.num_classes)
 
         self.lambda1 = nn.parameter.Parameter(torch.ones(1))      # for classifier
 
@@ -43,7 +44,7 @@ class AudioTextModel(torch.nn.Module):
         audio_embed = self.audioEmbedding(mfcc, mfcc_len)
         
         text_features = text_embed
-        audio_features = audio_embed.reshape(self.batch_size, 510 * 128)
+        audio_features = audio_embed#.reshape(self.batch_size, 510 * 128)
         
         text_outputs = self.text_classifier(text_features)
         audio_outputs = self.audio_classifier(audio_features)
@@ -52,9 +53,9 @@ class AudioTextModel(torch.nn.Module):
         #outputs = audio_outputs
         
         cls_loss = F.cross_entropy(outputs, label)
-        #cls_loss += (0.5 * (outputs ** 2).mean())
+        sd_loss = (0.5 * (outputs ** 2).mean())
 
-        loss = cls_loss
+        loss = cls_loss + sd_loss
         
         self.optimizer.zero_grad()
         loss.backward()
@@ -80,7 +81,7 @@ class AudioTextModel(torch.nn.Module):
         audio_embed = self.audioEmbedding(mfcc, mfcc_len)
         
         text_features = text_embed
-        audio_features = audio_embed.reshape(self.batch_size, 510 * 128)
+        audio_features = audio_embed#.reshape(self.batch_size, 510 * 128)
         
         text_outputs = self.text_classifier(text_features)
         audio_outputs = self.audio_classifier(audio_features)
@@ -89,9 +90,9 @@ class AudioTextModel(torch.nn.Module):
         #outputs = audio_outputs
         
         cls_loss = F.cross_entropy(outputs, label)
-        #cls_loss += (0.5 * (outputs ** 2).mean())
+        sd_loss = (0.5 * (outputs ** 2).mean())
 
-        loss = cls_loss
+        loss = cls_loss + sd_loss
         
         correct = (outputs.argmax(1).eq(label).float()).sum()
 

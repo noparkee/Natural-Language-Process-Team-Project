@@ -21,13 +21,9 @@ class AudioFeaturizer(torch.nn.Module):   # LSTM
     def __init__(self):
         super(AudioFeaturizer, self).__init__()
 
-        #self.W1 = nn.Linear(hidden*2, hidden)
-        #self.W2 = nn.Linear(hidden*2, hidden)
-        #self.V = nn.Linear(hidden, 1)
-
-        self.attention_size = 512
-        self.hidden1 = 512
-        self.hidden2 = 1024
+        self.attention_size = 1024       # 512
+        self.hidden1 = 512             # 512
+        self.hidden2 = 1024             # 1024
 
         self.lstm1 = nn.LSTM(input_size=20, hidden_size=self.hidden1, num_layers=1, batch_first=True, bidirectional=True)     # 양방향
         self.lstm2 = nn.LSTM(input_size=2*self.hidden1, hidden_size=self.hidden2, num_layers=1, batch_first=True, bidirectional=True)     # 양방향
@@ -37,8 +33,6 @@ class AudioFeaturizer(torch.nn.Module):   # LSTM
         self.wV = nn.Linear(2*self.hidden1, self.attention_size)
 
         
-
-
     def forward(self, x, l):
         n_batchsize, ml, vector_dim = x.size()
 
@@ -129,11 +123,13 @@ class ImageFeaturizer(torch.nn.Module):   # LSTM
     def __init__(self):
         super(ImageFeaturizer, self).__init__()
         
-        self.conv2d_1 = nn.Conv2d(in_channels=3, out_channels=16, kernel_size=3, stride=2)
-        self.conv2d_2 = nn.Conv2d(in_channels=16, out_channels=32, kernel_size=3, stride=2)
-        self.conv2d_3 = nn.Conv2d(in_channels=32, out_channels=64, kernel_size=3, stride=2)
-        self.conv2d_4 = nn.Conv2d(in_channels=64, out_channels=128, kernel_size=1, stride=1)
-        self.conv2d_5 = nn.Conv2d(in_channels=128, out_channels=256, kernel_size=3, stride=1)
+        self.conv2d_1 = nn.Conv2d(in_channels=3, out_channels=16, kernel_size=3, padding='same')
+        self.conv2d_2 = nn.Conv2d(in_channels=16, out_channels=32, kernel_size=3, padding='same')
+        self.conv2d_3 = nn.Conv2d(in_channels=32, out_channels=64, kernel_size=3, padding='same')
+        self.conv2d_4 = nn.Conv2d(in_channels=64, out_channels=128, kernel_size=3, padding='same')
+        self.conv2d_5 = nn.Conv2d(in_channels=128, out_channels=256, kernel_size=3, padding='same')
+        self.conv2d_6 = nn.Conv2d(in_channels=256, out_channels=512, kernel_size=3, stride=2)
+        self.conv2d_7 = nn.Conv2d(in_channels=512, out_channels=1024, kernel_size=3, stride=2)
 
         self.max_pool = nn.MaxPool2d(kernel_size=2, stride=2)
 
@@ -141,25 +137,39 @@ class ImageFeaturizer(torch.nn.Module):   # LSTM
     def forward(self, x):   
         
         x = self.conv2d_1(x)
+        #print(x.size())
         x = F.relu(x)
         x = F.max_pool2d(kernel_size=2, stride=2, input=x)
         #print(x.size())
         x = self.conv2d_2(x)
+        #print(x.size())
         x = F.relu(x)
         x = F.max_pool2d(kernel_size=2, stride=2, input=x)
         #print(x.size())
         x = self.conv2d_3(x)
+        #print(x.size())
         x = F.relu(x)
         x = F.max_pool2d(kernel_size=2, stride=2, input=x)
         #print(x.size())
         x = self.conv2d_4(x)
+        #print(x.size())
+        x = F.relu(x)
+        x = F.max_pool2d(kernel_size=2, stride=2, input=x)
+        x = self.conv2d_5(x)
+        #print(x.size())
         x = F.relu(x)
         x = F.max_pool2d(kernel_size=2, stride=2, input=x)
         #print(x.size())
-        x = self.conv2d_5(x)
-        x = F.relu(x)
-        x = torch.squeeze(x)
+        x = self.conv2d_6(x)
         #print(x.size())
+        x = F.relu(x)
+        x = F.max_pool2d(kernel_size=2, stride=2, input=x)
+        #print(x.size())
+        x = self.conv2d_7(x)
+        #print(x.size())
+        x = F.relu(x)
+        
+        x = torch.squeeze(x)
         #input()
 
         return x
