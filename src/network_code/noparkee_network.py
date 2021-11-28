@@ -20,27 +20,32 @@ class AudioFeaturizer(torch.nn.Module):   # LSTM
     ### mfcc 벡터를 LSTM에 통과 시켜서 last hidden state return
     def __init__(self):
         super(AudioFeaturizer, self).__init__()
-        
-        hidden = 512
-        self.lstm = nn.LSTM(input_size=20, hidden_size=hidden, num_layers=2, batch_first=True, bidirectional=True)     # 양방향
 
         #self.W1 = nn.Linear(hidden*2, hidden)
         #self.W2 = nn.Linear(hidden*2, hidden)
         #self.V = nn.Linear(hidden, 1)
 
-        self.attention_size = 32
-        self.wQ = nn.Linear(20, self.attention_size)
-        self.wK = nn.Linear(20, self.attention_size)
-        self.wV = nn.Linear(20, self.attention_size)
+        self.attention_size = 512
+        self.hidden1 = 512
+        self.hidden2 = 1024
+
+        self.lstm1 = nn.LSTM(input_size=20, hidden_size=self.hidden1, num_layers=1, batch_first=True, bidirectional=True)     # 양방향
+        self.lstm2 = nn.LSTM(input_size=2*self.hidden1, hidden_size=self.hidden2, num_layers=1, batch_first=True, bidirectional=True)     # 양방향
+
+        self.wQ = nn.Linear(2*self.hidden1, self.attention_size)
+        self.wK = nn.Linear(2*self.hidden1, self.attention_size)
+        self.wV = nn.Linear(2*self.hidden1, self.attention_size)
+
+        
 
 
     def forward(self, x, l):
         n_batchsize, ml, vector_dim = x.size()
 
         #x = pad_sequence(x, batch_first=True, padding_value=0)
-        x = pack_padded_sequence(x, l, batch_first=True, enforce_sorted=False)
-        x, state = self.lstm(x)
-        x, _ = pad_packed_sequence(x, total_length=max(l), batch_first=True)        # x: (B, ml, 2*hidden)
+        x1 = pack_padded_sequence(x, l, batch_first=True, enforce_sorted=False)
+        x1, state1 = self.lstm1(x1)
+        x, _ = pad_packed_sequence(x1, total_length=max(l), batch_first=True)        # x: (B, ml, 2*hidden1)
         
         ### attention (bahdanau)
         #hidden = torch.cat((state[0][2], state[0][3]), dim=1)       # get hidden state / 근데 여기서 index가 2와 3이 맞는지는 잘 모르겠음
@@ -56,10 +61,13 @@ class AudioFeaturizer(torch.nn.Module):   # LSTM
         querykey = torch.bmm(query, key.permute(0, 2, 1)) / math.sqrt(self.attention_size)
         sfmx = F.softmax(querykey, dim=-1)
         attnetion_value = torch.bmm(sfmx, value)            # (B, ml, attntion_size)
-
+        
+        x2 = pack_padded_sequence(attnetion_value, l, batch_first=True, enforce_sorted=False)
+        x2, state2 = self.lstm2(x)
+    
         #return state[0]   # hidden state
-        #return torch.cat((state[0][2], state[0][3]), dim=1)       # get hidden state / 근데 여기서 index가 2와 3이 맞는지는 잘 모르겠음
-        return attnetion_value
+        #return torch.cat((state2[0][2], state2[0][3]), dim=1)       # get hidden state / 근데 여기서 index가 2와 3이 맞는지는 잘 모르겠음
+        return torch.cat((state2[0][0], state2[0][1]), dim=1)
 
 
 class BertEmbed(torch.nn.Module):

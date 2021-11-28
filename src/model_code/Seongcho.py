@@ -11,7 +11,7 @@ from torch.nn.utils.rnn import pack_padded_sequence, pad_packed_sequence
 from network_code.network4 import AudioFeaturizer, BertEmbed
 
 def get_optimizer(params):
-    LEARNING_RATE = 0.0001
+    LEARNING_RATE = 0.0001x c
     WEIGHT_DECAY = 0
     optimizer = torch.optim.Adam(params, lr=LEARNING_RATE, weight_decay=WEIGHT_DECAY)
 

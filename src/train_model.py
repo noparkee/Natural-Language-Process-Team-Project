@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 # +
+import os
+import time
 import sys
 import random
 import numpy as np
@@ -11,30 +13,18 @@ from torch.utils.data import DataLoader
 
 from data import get_data_iterators, set_device
 from model import AudioTextModel
-
-import os
-import time
+from utils import set_seed, get_score
 # -
 
 ## Hyperparameters
-ITER = 10
+ITER = 30
 NUM_CLASSES = 5
 BATCH_SIZE = 32
 
 ## global seed 고정
-SEED = 14
-random.seed(SEED)
-np.random.seed(SEED)
-torch.manual_seed(SEED)
-torch.cuda.manual_seed(SEED)
-torch.cuda.manual_seed_all(SEED)
-torch.backends.cudnn.deterministic = True
-torch.backends.cudnn.benchmark = False
+set_seed(14)
 
-'''parser = argparse.ArgumentParser()
-parser.add_argument("--concat", type=bool, default=True)
-args = parser.parse_args()
-CONCAT = args.concat'''
+
 
 # ---
 #print("### pid: ", os.getpid())
@@ -54,8 +44,8 @@ print("### start train")
 print("\n")
 for step in range(ITER):   # epoch
         
-    model.debuglst_test = torch.zeros(NUM_CLASSES, NUM_CLASSES)
     model.debuglst_train = torch.zeros(NUM_CLASSES, NUM_CLASSES)
+    model.debuglst_test = torch.zeros(NUM_CLASSES, NUM_CLASSES)
 
     ### training
     train_correct, train_loss, train_num_batch = 0, 0, 0
@@ -71,11 +61,12 @@ for step in range(ITER):   # epoch
         train_num_batch += 1
 
     train_time = time.time()
-    
-    print('# step [{}/{}], train loss: {}'.format(step + 1, ITER, (train_loss / train_num_batch) / BATCH_SIZE))
-    print('# step [{}/{}], train accuracy: {}'.format(step + 1, ITER, (train_correct / train_num_batch) / BATCH_SIZE))
+    ua, wa = get_score(model.debuglst_train, NUM_CLASSES)
+    print('# step [{}/{}], train loss: {}'.format(step + 1, ITER, (train_loss / train_num_batch)))
+    #print('# step [{}/{}], train unweighted accuracy (UA): {}'.format(step + 1, ITER, (train_correct / train_num_batch) / BATCH_SIZE))
+    print('# step [{}/{}], train unweighted accuracy (UA): {}'.format(step + 1, ITER, ua))
+    print('# step [{}/{}], train weighted accuracy (WA): {}'.format(step + 1, ITER, wa))
     train_correct, train_loss, train_num_batch = 0, 0, 0
-
 
     ### testing (validation)
     test_correct, test_loss, test_num_batch = 0, 0, 0
@@ -89,10 +80,13 @@ for step in range(ITER):   # epoch
         test_correct += correct
         test_loss += loss
         test_num_batch += 1
+
     test_time = time.time()
-    
-    print('# step [{}/{}], test loss: {}'.format(step + 1, ITER, (test_loss / test_num_batch) / BATCH_SIZE))
-    print('# step [{}/{}], test accuracy: {}'.format(step + 1, ITER, (test_correct / test_num_batch) / BATCH_SIZE))
+    ua, wa = get_score(model.debuglst_test, NUM_CLASSES)
+    print('# step [{}/{}], test loss: {}'.format(step + 1, ITER, (test_loss / test_num_batch)))
+    #print('# step [{}/{}], test unweighted accuracy (UA): {}'.format(step + 1, ITER, (test_correct / test_num_batch) / BATCH_SIZE))
+    print('# step [{}/{}], test unweighted accuracy (UA): {}'.format(step + 1, ITER, ua))
+    print('# step [{}/{}], test weighted accuracy (WA): {}'.format(step + 1, ITER, wa))
     test_correct, test_loss, test_num_batch = 0, 0, 0
 
     print('----------')
