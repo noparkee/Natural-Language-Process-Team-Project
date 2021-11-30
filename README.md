@@ -4,7 +4,7 @@
 
 # SER with TextEmbedding
 Use not only Audio data features but also **Text data features**      
-You can see our paper: "**Speech Emotin Recognition with Text Features.pdf**"
+You can see our paper: [**Speech Emotin Recognition with Text Features.pdf**](https://github.com/noparkee/Natural-Language-Process-Team-Project/blob/main/Speech%20Emotin%20Recognition%20with%20Text%20Features.pdf)
 
 
 ![ourmodel](model.png)   
