@@ -193,4 +193,7 @@ description.pkl
 # reference file
 data_loader_ref.ipynb
 
+# old version
+old/
+
 # End of https://www.toptal.com/developers/gitignore/api/python,linux,windows

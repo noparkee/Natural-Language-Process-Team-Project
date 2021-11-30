@@ -44,13 +44,13 @@ class ourDataset(Dataset):
         self.mfcc_len = data['len'].tolist()
 
         ##v,a,d
-        self.v = data['v'].astype(float).tolist()
-        self.a = data['a'].astype(float).tolist()
-        self.d = data['d'].astype(float).tolist()
+        #self.v = data['v'].astype(float).tolist()
+        #self.a = data['a'].astype(float).tolist()
+        #self.d = data['d'].astype(float).tolist()
 
         ### image
-        self.image_path = data['image_path']
-        self.transform = get_transforms()
+        #self.image_path = data['image_path']
+        #self.transform = get_transforms()
 
     ### 총 데이터의 개수를 리턴
     def __len__(self):
@@ -63,23 +63,24 @@ class ourDataset(Dataset):
         audio_len = self.mfcc_len[index]
         label = self.label[index]
 
-        v = self.v[index]
-        a = self.a[index]
-        d = self.d[index]
+        #v = self.v[index]
+        #a = self.a[index]
+        #d = self.d[index]
 
         ###
-        image_path = self.image_path[index]
-        image = Image.open(image_path).convert('RGB')
-        image = self.transform(image)
+        #image_path = self.image_path[index]
+        #image = Image.open(image_path).convert('RGB')
+        #image = self.transform(image)
         
         # return sentence, audio_embed, audio_len, label, v, a, d
-        return sentence, audio_embed, audio_len, label, v, a, d, image
+        return sentence, audio_embed, audio_len, label#, v, a, d, image
 
 
 def collate_fn(batch):
     ## zip: 튜플의 리스트를 리스트의 튜플로 바꿔줌
     # sentence, audio_embedt, audio_len, label,  v, a, d = zip(*batch)
-    sentence, audio_embedt, audio_len, label, v, a, d, images = zip(*batch)
+    #sentence, audio_embedt, audio_len, label, v, a, d, images = zip(*batch)
+    sentence, audio_embedt, audio_len, label = zip(*batch)
     
     sentence = list(sentence)
     #audio_embed = torch.stack(audio_embed, 0)
@@ -89,15 +90,15 @@ def collate_fn(batch):
     audio_len = list(audio_len)
     label = torch.tensor(label)
     
-    v = torch.tensor(v)
-    a = torch.tensor(a)
-    d = torch.tensor(d)
+    #v = torch.tensor(v)
+    #a = torch.tensor(a)
+    #d = torch.tensor(d)
 
     ###
-    images = torch.stack(images, 0)
+    #images = torch.stack(images, 0)
 
     # return sentence, audio_embed, audio_len, label, v, a, d
-    return sentence, audio_embed, audio_len, label, v, a, d, images
+    return sentence, audio_embed, audio_len, label#, v, a, d, images
 
 def get_data_iterators(BATCH_SIZE):
     ## hyperparameters

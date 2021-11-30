@@ -17,7 +17,7 @@ from utils import set_seed, get_score
 # -
 
 ## Hyperparameters
-ITER = 5
+ITER = 4
 NUM_CLASSES = 4
 BATCH_SIZE = 32
 

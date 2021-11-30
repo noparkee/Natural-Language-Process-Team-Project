@@ -26,30 +26,32 @@ class AudioTextModel(torch.nn.Module):
         self.imageEmbedding = ImageFeaturizer()
 
         self.text_projection = nn.Linear(1024, 512)      # 512      # 512
-        self.audio_projection = nn.Linear(2048, 512)     # 512     # 1024
+        self.audio_projection = nn.Linear(1024, 512)     # 512     # 1024
         self.image_projection = nn.Linear(1024, 256)     # 256      # 512
 
         self.batch_size = batch_size
         self.num_classes = num_classes
         
-        self.classifier = nn.Linear(1024+256, self.num_classes)         # 1024+256      # 512 + 1024 + 512
+        self.classifier = nn.Linear(512, self.num_classes)         # 1024+256      # 512 + 1024 + 512
 
         self.optimizer = get_optimizer(self.parameters())
 
 
     def update(self, minibatch):
-        text, mfcc, mfcc_len, label, v, a, d, images = minibatch
+        #text, mfcc, mfcc_len, label, v, a, d, images = minibatch
+        text, mfcc, mfcc_len, label = minibatch
 
-        text_embed = self.textEmbedding(text)                   # (B, 1024)
+        #text_embed = self.textEmbedding(text)                   # (B, 1024)
         audio_embed = self.audioEmbedding(mfcc, mfcc_len)       # (B, 2*hidden )
-        image_embed = self.imageEmbedding(images)
+        #image_embed = self.imageEmbedding(images)
 
-        text_features = self.text_projection(text_embed)
+        #text_features = self.text_projection(text_embed)
         audio_features = self.audio_projection(torch.squeeze(audio_embed, dim=0))
-        image_features = self.image_projection(image_embed)
-        features = torch.cat((text_features, audio_features, image_features), dim=1)
+        #image_features = self.image_projection(image_embed)
+        #features = torch.cat((text_features, audio_features, image_features), dim=1)
+        #features = torch.cat((audio_features, image_features), dim=1)
 
-        cls_outputs = self.classifier(features)
+        cls_outputs = self.classifier(audio_features)
 
         cls_loss = F.cross_entropy(cls_outputs, label)
 
@@ -73,18 +75,20 @@ class AudioTextModel(torch.nn.Module):
         
         
     def evaluate(self, minibatch):
-        text, mfcc, mfcc_len, label, v, a, d, images = minibatch
+        #text, mfcc, mfcc_len, label, v, a, d, images = minibatch
+        text, mfcc, mfcc_len, label = minibatch
 
-        text_embed = self.textEmbedding(text)
-        audio_embed = self.audioEmbedding(mfcc, mfcc_len)
-        image_embed = self.imageEmbedding(images)
-        
-        text_features = self.text_projection(text_embed)
-        audio_features = torch.squeeze(self.audio_projection(audio_embed), dim=0)
-        image_features = self.image_projection(image_embed)
-        features = torch.cat((text_features, audio_features, image_features), dim=1)
+        #text_embed = self.textEmbedding(text)                   # (B, 1024)
+        audio_embed = self.audioEmbedding(mfcc, mfcc_len)       # (B, 2*hidden )
+        #image_embed = self.imageEmbedding(images)
 
-        cls_outputs = self.classifier(features)
+        #text_features = self.text_projection(text_embed)
+        audio_features = self.audio_projection(torch.squeeze(audio_embed, dim=0))
+        #image_features = self.image_projection(image_embed)
+        #features = torch.cat((text_features, audio_features, image_features), dim=1)
+        #features = torch.cat((audio_features, image_features), dim=1)
+
+        cls_outputs = self.classifier(audio_features)
 
         cls_loss = F.cross_entropy(cls_outputs, label)
         

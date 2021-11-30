@@ -47,7 +47,7 @@ class AudioFeaturizer(torch.nn.Module):   # LSTM
         #attention_weights = F.softmax(score)        # (B, Max_L, 1)
         #context_vector = torch.squeeze(torch.bmm(attention_weights.permute(0, 2, 1), x), dim=1)
 
-        ### self attention
+        '''### self attention
         query = self.wQ(x)      # (B, ml, attenion_size)
         key = self.wK(x)
         value = self.wV(x)
@@ -61,7 +61,8 @@ class AudioFeaturizer(torch.nn.Module):   # LSTM
     
         #return state[0]   # hidden state
         #return torch.cat((state2[0][2], state2[0][3]), dim=1)       # get hidden state / 근데 여기서 index가 2와 3이 맞는지는 잘 모르겠음
-        return torch.cat((state2[0][0], state2[0][1]), dim=1)
+        return torch.cat((state2[0][0], state2[0][1]), dim=1)'''
+        return torch.cat((state1[0][0], state1[0][1]), dim=1)
 
 
 class BertEmbed(torch.nn.Module):
