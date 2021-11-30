@@ -35,6 +35,19 @@ An overview of our proposed model, which consists of three featurizers and one c
 - Model (3) use audio features and image features
 - Model (4) use audio features, text features, and image features
 
+## Code Files
+#### preprocess
+- make_description.py: define data path, align the data -> create description.pkl
+- make_mel_spectrogram.py: create mel-spectrogram images, and save with path of that image (edit description.pkl)
+- make_audio.py: create mfcc vector from wav file -> create audio.pkl
+- make_data.py: join description.pkl with audio.pkl -> create data.pkl
+#### src
+- train_model.py: main file
+- model.py: define our model
+- network.py: define the featurizers
+- data.py: dataloader
+- utils.py: set seeds, calculate score
+
 ---
 ## Reference Paper
 [Empirical Interpretation of Speech Emotion Perception with Attention Based Model for Speech Emotion Recognition](http://www.interspeech2020.org/uploadfile/pdf/Thu-2-2-8.pdf)
