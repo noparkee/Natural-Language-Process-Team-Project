@@ -13,7 +13,7 @@ audio = audio.sort_values(by='name')
 
 # run all
 audio['wav_vec'] = audio['wav_path'].apply(lambda x: librosa.load(x,sr=44100)[0])   # 3840   # 16800
-audio['mfcc'] = audio['wav_vec'].apply(lambda x: librosa.feature.mfcc(x, sr=44100)[0])
+audio['mfcc'] = audio['wav_vec'].apply(lambda x: librosa.feature.mfcc(x, sr=44100))
 
 audio['mfcc_tensor'] = audio['mfcc'].map(lambda x: torch.tensor(x))
 audio['len'] = audio['mfcc'].map(lambda x: x.shape[1])
