@@ -20,15 +20,26 @@ class AudioFeaturizer(torch.nn.Module):   # LSTM
     def __init__(self):
         super(AudioFeaturizer, self).__init__()
         
-        blstm_hidden = 512
+        blstm_hidden = 1024
         self.blstm = nn.LSTM(input_size=20, hidden_size=blstm_hidden, num_layers=2, batch_first=True, bidirectional=True)     # 양방향
 
-        self.cnn_0 = nn.Conv1d(in_channels=1, out_channels=128, kernel_size=5)
+        self.cnn_0 = nn.Conv1d(in_channels=1, out_channels=128, kernel_size=5, padding=2)
         self.batchNorm_1 = nn.BatchNorm1d(num_features=128)
+
         self.cnn_2 = nn.Conv1d(in_channels=128, out_channels=128, kernel_size=3, padding=1)
         self.cnn_3 = nn.Conv1d(in_channels=128, out_channels=128, kernel_size=3, padding=1)
         self.maxPool_4 = nn.MaxPool1d(kernel_size=2)
         self.batchNorm_5 = nn.BatchNorm1d(num_features=128)
+
+        # self.cnn_6 = nn.Conv1d(in_channels=256, out_channels=256, kernel_size=3, padding=1)
+        # self.cnn_7 = nn.Conv1d(in_channels=256, out_channels=512, kernel_size=3, padding=1)
+        # self.maxPool_8 = nn.MaxPool1d(kernel_size=2)
+        # self.batchNorm_9 = nn.BatchNorm1d(num_features=512)
+
+        # self.cnn_10 = nn.Conv1d(in_channels=512, out_channels=512, kernel_size=3, padding=1)
+        # self.cnn_11 = nn.Conv1d(in_channels=512, out_channels=1024, kernel_size=3, padding=1)
+        # self.maxPool_12 = nn.MaxPool1d(kernel_size=2)
+        # self.batchNorm_13 = nn.BatchNorm1d(num_features=1024)
 
         self.cnn_j = nn.Conv1d(in_channels=128, out_channels=16, kernel_size=1)
         self.cnn_k = nn.Conv1d(in_channels=128, out_channels=16, kernel_size=1)
@@ -37,7 +48,6 @@ class AudioFeaturizer(torch.nn.Module):   # LSTM
         self.gamma = nn.parameter.Parameter(torch.zeros(1))
 
     def forward(self, x, l):
-        
         #x = pad_sequence(x, batch_first=True, padding_value=0)
         x = pack_padded_sequence(x, l, batch_first=True, enforce_sorted=False)
         x, state = self.blstm(x)
@@ -45,28 +55,38 @@ class AudioFeaturizer(torch.nn.Module):   # LSTM
 
         y = torch.cat((state[0][-2], state[0][-1]), dim=1)    # (B, 2 * h)
 
-        # y = y.unsqueeze(dim=1)  # (B, 1, 2 * h)
-        # y = self.cnn_0(y)  # (B, 128, 2 * h - 4)
+        y = y.unsqueeze(dim=1)  # (B, 1, 1024)
+        y = F.relu(self.cnn_0(y))  # (B, 128, 1024)
         
-        # y = self.batchNorm_1(y)
-        # y = self.cnn_2(y) 
-        # # y = self.cnn_3(y)   # (B, 128, 2 * h - 4)
-        
-        # y = self.maxPool_4(y) # (B, 128, h - 2)
-        # y = self.batchNorm_5(y)
+        y = self.batchNorm_1(y)
+
+        y = F.relu(self.cnn_2(y))
+        y = F.relu(self.cnn_3(y))  # (B, 256, 1024)
+        y = self.maxPool_4(y)   # (B, 256, 512)
+        y = self.batchNorm_5(y)
+
+        # y = F.relu(self.cnn_6(y))
+        # y = F.relu(self.cnn_7(y))  # (B, 512, 512)
+        # y = self.maxPool_8(y)   # (B, 512, 256)
+        # y = self.batchNorm_9(y)
+
+        # y = F.relu(self.cnn_10(y))
+        # y = F.relu(self.cnn_11(y))  # (B, 1024, 256)
+        # y = self.maxPool_12(y)   # (B, 1024, 128)
+        # y = self.batchNorm_13(y)
     
-        # jy = self.cnn_j(y) # (B, 16, h - 2)
-        # ky = self.cnn_k(y) # (B, 16, h - 2)
-        # ly = self.cnn_l(y) # (B, 128, h - 2)
+        jy = self.cnn_j(y)  # (B, 128, 128)
+        ky = self.cnn_k(y)  # (B, 128, 128)
+        ly = self.cnn_l(y)  # (B, 1024, 128)
 
-        # E = torch.bmm(jy.permute(0, 2, 1), ky)  # (B, h - 2, h - 2)
+        E = torch.bmm(jy.permute(0, 2, 1), ky)  # (B, 128, 128)
         
-        # E = E.view(-1).softmax(0).view(*E.shape)
-        # A = torch.bmm(ly, E) # (B, 128, h - 2)
+        E = E.view(-1).softmax(0).view(*E.shape)
+        A = torch.bmm(ly, E)    # (B, 1024, 128)
 
-        context_vector = y #+ self.gamma * A # (B, 128, h - 2)
+        context_vector = y + self.gamma * A     # (B, 1024, 128)
 
-        return context_vector       # (B, 128, h - 2)
+        return context_vector       # (B, 1024, 128)
 
 class BertEmbed(torch.nn.Module):
     def __init__(self):

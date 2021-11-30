@@ -17,8 +17,8 @@ from utils import set_seed, get_score
 # -
 
 ## Hyperparameters
-ITER = 30
-NUM_CLASSES = 5
+ITER = 5
+NUM_CLASSES = 4
 BATCH_SIZE = 32
 
 ## global seed 고정
@@ -35,6 +35,14 @@ os.sched_setaffinity(0, affinity_mask)
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 print('### device: ' + str(device))
 model = AudioTextModel(batch_size=BATCH_SIZE, num_classes=NUM_CLASSES).to(device)
+
+### Check the learnable parameters
+# for name, param in model.named_parameters():
+#     if(param.requires_grad):
+#         print(name)
+#     else:
+#         print('no grad',name)
+
 print("### load model")
 
 train, test = get_data_iterators(BATCH_SIZE)
@@ -43,7 +51,8 @@ print("### load data")
 print("### start train")
 print("\n")
 for step in range(ITER):   # epoch
-        
+    model.train()
+
     model.debuglst_train = torch.zeros(NUM_CLASSES, NUM_CLASSES)
     model.debuglst_test = torch.zeros(NUM_CLASSES, NUM_CLASSES)
 
@@ -69,6 +78,8 @@ for step in range(ITER):   # epoch
     train_correct, train_loss, train_num_batch = 0, 0, 0
 
     ### testing (validation)
+    model.eval()
+
     test_correct, test_loss, test_num_batch = 0, 0, 0
     test_starttime = time.time()
     for batch_idx, minibatch in enumerate(test):

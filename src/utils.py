@@ -19,8 +19,8 @@ def get_score(matrix, num_classes):
     wa = torch.zeros(num_classes, dtype=torch.double)
 
     ua_total = torch.sum(matrix)
-    wa_total = torch.sum(matrix, dim=1)
-    
+    wa_total = torch.sum(matrix, dim=0)
+
     for i in range(num_classes):
         ua += (matrix[i][i].item())
         wa[i] = matrix[i][i] / wa_total[i]

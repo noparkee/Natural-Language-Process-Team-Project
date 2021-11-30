@@ -21,7 +21,7 @@ class AudioFeaturizer(torch.nn.Module):   # LSTM
     def __init__(self):
         super(AudioFeaturizer, self).__init__()
 
-        self.attention_size = 1024       # 512
+        self.attention_size = 512       # 512
         self.hidden1 = 512             # 512
         self.hidden2 = 1024             # 1024
 
@@ -55,9 +55,8 @@ class AudioFeaturizer(torch.nn.Module):   # LSTM
         querykey = torch.bmm(query, key.permute(0, 2, 1)) / math.sqrt(self.attention_size)
         sfmx = F.softmax(querykey, dim=-1)
         attnetion_value = torch.bmm(sfmx, value)            # (B, ml, attntion_size)
-        #out = self.gamma*attnetion_value + x               # 이거 해줘야하나??
-
-        x2 = pack_padded_sequence(out, l, batch_first=True, enforce_sorted=False)
+        
+        x2 = pack_padded_sequence(attnetion_value, l, batch_first=True, enforce_sorted=False)
         x2, state2 = self.lstm2(x)
     
         #return state[0]   # hidden state
@@ -126,17 +125,25 @@ class ImageFeaturizer(torch.nn.Module):   # LSTM
         
         self.conv2d_1 = nn.Conv2d(in_channels=3, out_channels=16, kernel_size=3, padding='same')
         self.conv2d_2 = nn.Conv2d(in_channels=16, out_channels=32, kernel_size=3, padding='same')
-        
+
         self.batchnorm2d_2 = nn.BatchNorm2d(32) ##수정했음!
-        
         self.conv2d_3 = nn.Conv2d(in_channels=32, out_channels=64, kernel_size=3, padding='same')
         self.conv2d_4 = nn.Conv2d(in_channels=64, out_channels=128, kernel_size=3, padding='same')
         self.conv2d_5 = nn.Conv2d(in_channels=128, out_channels=256, kernel_size=3, padding='same')
-        
-        self.batchnorm2d_5 = nn.BatchNorm2d(256) ##수정했음!
 
+        self.batchnorm2d_5 = nn.BatchNorm2d(256) ##수정했음!
         self.conv2d_6 = nn.Conv2d(in_channels=256, out_channels=512, kernel_size=3, stride=2)
         self.conv2d_7 = nn.Conv2d(in_channels=512, out_channels=1024, kernel_size=3, stride=2)
+
+        self.batchnorm2d_7 = nn.BatchNorm2d(1024) ##수정했음!
+
+        self.cnn_j = nn.Conv1d(in_channels=256, out_channels=32, kernel_size=1)
+        self.cnn_k = nn.Conv1d(in_channels=256, out_channels=32, kernel_size=1)
+        self.cnn_l = nn.Conv1d(in_channels=256, out_channels=256, kernel_size=1)
+
+        self.gamma = nn.parameter.Parameter(torch.zeros(1))
+
+        
 
         self.max_pool = nn.MaxPool2d(kernel_size=2, stride=2)
 
@@ -152,7 +159,9 @@ class ImageFeaturizer(torch.nn.Module):   # LSTM
         #print(x.size())
         x = F.relu(x)
         x = F.max_pool2d(kernel_size=2, stride=2, input=x)
+
         x = self.batchnorm2d_2(x)   ##수정했음!
+
         #print(x.size())
         x = self.conv2d_3(x)
         #print(x.size())
@@ -164,21 +173,44 @@ class ImageFeaturizer(torch.nn.Module):   # LSTM
         x = F.relu(x)
         x = F.max_pool2d(kernel_size=2, stride=2, input=x)
         x = self.conv2d_5(x)
-        #print(x.size())     # (B, 256, 28, 28)
+        #print(x.size())
         x = F.relu(x)
         x = F.max_pool2d(kernel_size=2, stride=2, input=x)
+
         x = self.batchnorm2d_5(x)   ##수정했음!
-        #print(x.size())     # (B, 256, 14, 14)
+
+        
+###
+        x = x.reshape(32, 256, 14*14)
+    
+        # x = torch.squeeze(x)
+
+        jx = self.cnn_j(x)
+        kx = self.cnn_k(x)
+        lx = self.cnn_l(x)
+
+        E = torch.bmm(jx.permute(0, 2, 1), kx)
+        E = E.view(-1).softmax(0).view(*E.shape)
+        A = torch.bmm(lx, E) 
+
+        x = x + self.gamma * A
+
+        x = x.reshape(32, 256, 14, 14)
+###
+
         x = self.conv2d_6(x)
-        #print(x.size())     # (B, 512, 6, 6)
+        #print(x.size())
         x = F.relu(x)
         x = F.max_pool2d(kernel_size=2, stride=2, input=x)
-        #print(x.size())     # (B, 512, 3, 3)
+        # print(x.size())
         x = self.conv2d_7(x)
-        #print(x.size())     # (B, 1024, 1, 1)
+        # print(x.size())
         x = F.relu(x)
-        
-        x = torch.squeeze(x)
+
+        x = self.batchnorm2d_7(x)   ##수정했음!
+
+        x = x.squeeze()
+
         #input()
 
         return x

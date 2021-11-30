@@ -21,7 +21,7 @@ class AudioFeaturizer(torch.nn.Module):   # LSTM
     def __init__(self):
         super(AudioFeaturizer, self).__init__()
 
-        self.attention_size = 1024       # 512
+        self.attention_size = 512       # 512
         self.hidden1 = 512             # 512
         self.hidden2 = 1024             # 1024
 
@@ -125,51 +125,80 @@ class ImageFeaturizer(torch.nn.Module):   # LSTM
         
         self.conv2d_1 = nn.Conv2d(in_channels=3, out_channels=16, kernel_size=3, padding='same')
         self.conv2d_2 = nn.Conv2d(in_channels=16, out_channels=32, kernel_size=3, padding='same')
+
+        self.batchnorm2d_2 = nn.BatchNorm2d(32) ##수정했음!
         self.conv2d_3 = nn.Conv2d(in_channels=32, out_channels=64, kernel_size=3, padding='same')
         self.conv2d_4 = nn.Conv2d(in_channels=64, out_channels=128, kernel_size=3, padding='same')
         self.conv2d_5 = nn.Conv2d(in_channels=128, out_channels=256, kernel_size=3, padding='same')
+
+        self.batchnorm2d_5 = nn.BatchNorm2d(256) ##수정했음!
         self.conv2d_6 = nn.Conv2d(in_channels=256, out_channels=512, kernel_size=3, stride=2)
         self.conv2d_7 = nn.Conv2d(in_channels=512, out_channels=1024, kernel_size=3, stride=2)
+
+        self.batchnorm2d_7 = nn.BatchNorm2d(1024) ##수정했음!
+
+        self.cnn_j = nn.Conv1d(in_channels=256, out_channels=32, kernel_size=1)
+        self.cnn_k = nn.Conv1d(in_channels=256, out_channels=32, kernel_size=1)
+        self.cnn_l = nn.Conv1d(in_channels=256, out_channels=256, kernel_size=1)
+
+        self.gamma = nn.parameter.Parameter(torch.zeros(1))
+
+        
 
         self.max_pool = nn.MaxPool2d(kernel_size=2, stride=2)
 
 
     def forward(self, x):   
         
-        x = self.conv2d_1(x)
-        #print(x.size())
+        x = self.conv2d_1(x)                                    # (16, 448, 448)
+        x = F.relu(x)
+        x = F.max_pool2d(kernel_size=2, stride=2, input=x)      # (16, 224, 224)
+        x = self.conv2d_2(x)                                    # (32, 224, 224)
+        x = F.relu(x)
+        x = F.max_pool2d(kernel_size=2, stride=2, input=x)      # (32, 112, 112)
+
+        x = self.batchnorm2d_2(x)   ##수정했음!
+
+        x = self.conv2d_3(x)                                    # (64, 112, 112)
+        x = F.relu(x)
+        x = F.max_pool2d(kernel_size=2, stride=2, input=x)      # (64, 56, 56)
+        x = self.conv2d_4(x)                                    # (128, 56, 56)
         x = F.relu(x)
         x = F.max_pool2d(kernel_size=2, stride=2, input=x)
-        #print(x.size())
-        x = self.conv2d_2(x)
-        #print(x.size())
+        x = self.conv2d_5(x)                                    # (256, 28, 28)
         x = F.relu(x)
         x = F.max_pool2d(kernel_size=2, stride=2, input=x)
-        #print(x.size())
-        x = self.conv2d_3(x)
-        #print(x.size())
-        x = F.relu(x)
-        x = F.max_pool2d(kernel_size=2, stride=2, input=x)
-        #print(x.size())
-        x = self.conv2d_4(x)
-        #print(x.size())
-        x = F.relu(x)
-        x = F.max_pool2d(kernel_size=2, stride=2, input=x)
-        x = self.conv2d_5(x)
-        #print(x.size())
-        x = F.relu(x)
-        x = F.max_pool2d(kernel_size=2, stride=2, input=x)
-        #print(x.size())
-        x = self.conv2d_6(x)
-        #print(x.size())
-        x = F.relu(x)
-        x = F.max_pool2d(kernel_size=2, stride=2, input=x)
-        #print(x.size())
-        x = self.conv2d_7(x)
-        #print(x.size())
-        x = F.relu(x)
+
+        x = self.batchnorm2d_5(x)   ##수정했음!                  # (256, 14, 14)
+        size = x.size()
         
-        x = torch.squeeze(x)
+###
+        x = x.reshape(size[0], size[1], -1)                     # (256, 196)
+
+        # x = torch.squeeze(x)
+
+        jx = self.cnn_j(x)
+        kx = self.cnn_k(x)
+        lx = self.cnn_l(x)
+
+        E = torch.bmm(jx.permute(0, 2, 1), kx)
+        E = E.view(-1).softmax(0).view(*E.shape)
+        A = torch.bmm(lx, E) 
+
+        x = x + self.gamma * A
+
+        x = x.reshape(size[0], size[1], size[2], size[3])       # (256, 14, 14)
+###
+
+        x = self.conv2d_6(x)                                    # (512, 6, 6)
+        x = F.relu(x)
+        x = F.max_pool2d(kernel_size=2, stride=2, input=x)      # (512, 3, 3)
+        x = self.conv2d_7(x)                       # (1024, 1, 1)
+        x = F.relu(x)
+
+        x = self.batchnorm2d_7(x)   ##수정했음!     # (1024, 1, 1)
+
+        x = x.squeeze()             # (1024)
         #input()
 
         return x

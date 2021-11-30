@@ -26,29 +26,30 @@ class ourDataset(Dataset):
         ##data set 경로(루트경로)
         self.data_path = '../data'
 
-        audio = pd.read_pickle(self.data_path + '/audio_vec4_44100.pkl')
-        description = pd.read_pickle(self.data_path + '/description4.pkl')
+        #audio = pd.read_pickle(self.data_path + '/audio_vec4_44100.pkl')
+        #description = pd.read_pickle(self.data_path + '/description4.pkl')
+        data = pd.read_pickle(self.data_path + '/data3.pkl')
 
         ##true y's
-        self.sentence = description['sentence']
+        self.sentence = data['sentence']
         #self.label = description['label']
-        self.label = description['label_num']
+        self.label = data['label_num']
 
         ##audio feature
         #self.mfcc = audio['mfcc']
         
         #self.mfcc_tensor = torch.nn.utils.rnn.pad_sequence(audio['mfcc_tensor'].tolist(),batch_first=True, padding_value=0)
         
-        self.mfcc_tensor = audio['mfcc_tensor'].tolist()
-        self.mfcc_len = audio['len'].tolist()
+        self.mfcc_tensor = data['mfcc_tensor'].tolist()
+        self.mfcc_len = data['len'].tolist()
 
         ##v,a,d
-        self.v = description['v'].astype(float).tolist()
-        self.a = description['a'].astype(float).tolist()
-        self.d = description['d'].astype(float).tolist()
+        self.v = data['v'].astype(float).tolist()
+        self.a = data['a'].astype(float).tolist()
+        self.d = data['d'].astype(float).tolist()
 
         ### image
-        self.image_path = description['image_path']
+        self.image_path = data['image_path']
         self.transform = get_transforms()
 
     ### 총 데이터의 개수를 리턴
@@ -105,11 +106,12 @@ def get_data_iterators(BATCH_SIZE):
     SHUFFLE = False
     
     ## Total 7487 / 10039
-    TOTAL = 7487
+    dataset = ourDataset()
+
+    TOTAL = dataset.__len__()
     NUM_TRAIN = int(TOTAL * 0.8)
     NUM_TEST = TOTAL - NUM_TRAIN
 
-    dataset = ourDataset()
     dataset_train, dataset_test = torch.utils.data.random_split(dataset, [NUM_TRAIN, NUM_TEST])
   
     train_loader = DataLoader(dataset_train, batch_size=BATCH_SIZE, shuffle=SHUFFLE, num_workers=NUM_WORKERS, drop_last=DROP_LAST, collate_fn=collate_fn)

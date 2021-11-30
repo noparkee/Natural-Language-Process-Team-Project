@@ -32,7 +32,7 @@ class AudioTextModel(torch.nn.Module):
         self.batch_size = batch_size
         self.num_classes = num_classes
         
-        self.classifier = nn.Linear(1024+256, self.num_classes)
+        self.classifier = nn.Linear(1024, self.num_classes)         # 1024+256
 
         self.optimizer = get_optimizer(self.parameters())
 
@@ -41,17 +41,53 @@ class AudioTextModel(torch.nn.Module):
         #self.alayer = nn.Linear(1024+256, 1)
         #self.dlayer = nn.Linear(1024+256, 1)
 
+        #self.query_conv = nn.Conv2d(in_channels = 256, out_channels = 256//8, kernel_size=1)
+        #self.key_conv  = nn.Conv2d(in_channels = 256, out_channels = 256//8, kernel_size=1) 
+        #self.value_conv   = nn.Conv2d(in_channels = 256, out_channels = 1024, kernel_size=1)         
+        #self.gamma = nn.Parameter(torch.zeros(1))
+        #self.avgpool = nn.AdaptiveAvgPool2d(output_size=(1,1))
+
+    '''def make_image_features(self, x):
+        # SAGAN
+        n_batchsize, n_channel, width, height = x.size()        # (B, 256, 28, 28) 
+
+        proj_query = self.query_conv(image_before_pooling).view(n_batchsize,-1,width*height).permute(0,2,1)        # B X C X (N)
+        print(proj_query.size())
+        proj_key = self.key_conv(image_before_pooling).view(n_batchsize,-1,width*height)                           # B X C x (*W*H)
+        print(proj_key.size())
+        energy = torch.bmm(proj_query,proj_key)                                                                    # transpose check
+        print(energy.size())
+        attention = F.softmax(energy, dim=-1)            #####################                                           # BX (N) X (N)          # (32, 196, 196)
+        print(attention.size())
+                
+        proj_value = self.value_conv(image_before_pooling).view(n_batchsize,-1,width*height)                        # B X C X N
+        print(proj_value.size())
+        
+        out = torch.bmm(proj_value,attention.permute(0,2,1))        # (32, 2048, 196)
+        print(out.size())
+        out = out.view(n_batchsize,n_channel,width,height)          # (32, 2048, 14, 14)
+        print(out.size())
+        sum_out = self.gamma*out + image_before_pooling             # (32, 2048, 14, 14)
+        print(sum_out.size())
+        image_features = self.avgpool(sum_out).squeeze()            # (32, 2048)
+        print(image_features.size())
+        
+        input()
+        
+        return image_features'''
+
     def update(self, minibatch):
         text, mfcc, mfcc_len, label, v, a, d, images = minibatch
 
         text_embed = self.textEmbedding(text)                   # (B, 1024)
-        audio_embed = self.audioEmbedding(mfcc, mfcc_len)       # (B, 2*hidden )
+        audio_embed = self.audioEmbedding(mfcc, mfcc_len)       # (B, 2*hidden)
         image_embed = self.imageEmbedding(images)
 
         text_features = self.text_projection(text_embed)
         audio_features = self.audio_projection(torch.squeeze(audio_embed, dim=0))
         image_features = self.image_projection(image_embed)
-        features = torch.cat((text_features, audio_features, image_features), dim=1)
+        #features = torch.cat((text_features, audio_features, image_features), dim=1)
+        features = torch.cat((text_features, audio_features), dim=1)
 
         cls_outputs = self.classifier(features)
         #v_outputs = self.vlayer(features)
@@ -94,7 +130,9 @@ class AudioTextModel(torch.nn.Module):
         text_features = self.text_projection(text_embed)
         audio_features = torch.squeeze(self.audio_projection(audio_embed), dim=0)
         image_features = self.image_projection(image_embed)
-        features = torch.cat((text_features, audio_features, image_features), dim=1)
+        #features = torch.cat((text_features, audio_features, image_features), dim=1)
+        features = torch.cat((text_features, audio_features), dim=1)
+
 
         cls_outputs = self.classifier(features)
         #v_outputs = self.vlayer(features)
