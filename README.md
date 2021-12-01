@@ -28,7 +28,7 @@ An overview of our proposed model, which consists of three featurizers and one c
 |(1): audio|51.47|52.75|
 |(2): audio + text|**68.29**|69.2|
 |(3): audio + image|51.01|53.12|
-|(4): audio + text + image|68.2|71.02|
+|(4): audio + text + image|68.2|**71.02**|
 
 - Model (1) use only audio features
 - Model (2) use audio features and text features
